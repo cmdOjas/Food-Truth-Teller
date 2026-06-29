@@ -1,0 +1,501 @@
+ingredients,label,prediction
+"quinoa, chickpeas, parsley, olive oil, lemon, lemon juice",0,Safe
+"water, whole grain oats, natural honey, blueberries, almonds",0,Safe
+"bleached flour, shortening, dextrose, artificial sweetener, e102 e110, bht bha tbhq",1,Avoid
+"orange, grapefruit, lemon, sparkling water, lemon juice",0,Safe
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, high fructose corn syrup",1,Avoid
+"black bean soup, cumin, cayenne, lime, spices",0,Safe
+"lentils, carrots, tomatoes, onion, turmeric, water, organic cane sugar",0,Safe
+"butylated hydroxytoluene, butylated hydroxyanisole, propyl gallate, tbhq",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, msg monosodium glutamate",1,Avoid
+"milk, cream, sugar, eggs, vanilla bean",0,Caution
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, high fructose corn syrup",1,Avoid
+"chicken breast, brown rice, steamed broccoli, olive oil, sea salt",0,Safe
+"barley, mushrooms, thyme, vegetable broth, apple cider vinegar",0,Safe
+"salmon, lemon, dill, olive oil, garlic, lemon juice",0,Safe
+"almonds, cashews, walnuts, pumpkin seeds, raisins, spices",0,Safe
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate, msg monosodium glutamate",1,Avoid
+"quinoa, chickpeas, parsley, olive oil, lemon, sea salt",0,Safe
+"corn syrup solids, hydrogenated coconut oil, sodium caseinate, dipotassium phosphate, msg monosodium glutamate",1,Avoid
+"edamame, sea salt, spices",0,Safe
+"brown rice, black beans, olive oil, garlic, cumin, organic cane sugar",0,Safe
+"sugar, palm oil, artificial colors, maltodextrin, monosodium glutamate, artificial color",1,Avoid
+"barley, mushrooms, thyme, vegetable broth, organic cane sugar",0,Safe
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, bht bha tbhq",1,Avoid
+"whole wheat flour, water, yeast, salt, apple cider vinegar",0,Safe
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake",1,Avoid
+"oats, wheat, honey, raisins, sunflower oil, sea salt",0,Caution
+"egg whites, spinach, mushrooms, onion, garlic, sea salt",0,Safe
+"tempeh, tamari, sesame oil, garlic, ginger, apple cider vinegar",0,Safe
+"greek yogurt, strawberries, granola, honey, organic cane sugar",0,Safe
+"white flour, sugar, partially hydrogenated soybean oil, artificial vanilla, bha bht, sodium benzoate",1,Avoid
+"air popped popcorn, nutritional yeast, sea salt, lemon juice",0,Safe
+"artificial sweeteners aspartame saccharin acesulfame, food dyes fd c red 3, bht bha tbhq",1,Avoid
+"artificial sweeteners aspartame saccharin acesulfame, food dyes fd c red 3, sodium benzoate",1,Avoid
+"water, whole grain oats, natural honey, blueberries, almonds, spices",0,Safe
+"enriched flour, sugar, corn syrup, soybean oil, salt, tbhq, artificial color, msg monosodium glutamate",1,Avoid
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla, sodium benzoate",1,Avoid
+"oat flour, banana, eggs, vanilla extract, baking powder, apple cider vinegar",0,Safe
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1, high fructose corn syrup",1,Avoid
+"black bean soup, cumin, cayenne, lime",0,Safe
+"high fructose corn syrup, caramel color, phosphoric acid, natural flavors, msg monosodium glutamate",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, bht bha tbhq",1,Avoid
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, msg monosodium glutamate",1,Avoid
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, high fructose corn syrup",1,Avoid
+"bleached flour, shortening, dextrose, artificial sweetener, e102 e110, high fructose corn syrup",1,Avoid
+"salt, sunflower oil, whey, milk, natural flavoring",0,Caution
+"orange, grapefruit, lemon, sparkling water, sea salt",0,Safe
+"oat flour, banana, eggs, vanilla extract, baking powder, spices",0,Safe
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1, sodium benzoate",1,Avoid
+"skim milk, oats, blueberries, flaxseed, apple cider vinegar",0,Safe
+"whole wheat flour, water, yeast, salt, apple cider vinegar",0,Safe
+"barley, mushrooms, thyme, vegetable broth, sea salt",0,Safe
+"turkey breast, lettuce, tomato, mustard, whole grain bread, organic cane sugar",0,Safe
+"sodium nitrite, sodium phosphate, corn syrup, dextrose, modified corn starch, sodium benzoate",1,Avoid
+"sodium nitrite, sodium phosphate, corn syrup, dextrose, modified corn starch, high fructose corn syrup",1,Avoid
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, msg monosodium glutamate",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, high fructose corn syrup",1,Avoid
+"white flour, sugar, partially hydrogenated soybean oil, artificial vanilla, bha bht, artificial color",1,Avoid
+"barley, mushrooms, thyme, vegetable broth",0,Safe
+"beet, carrot, apple, ginger, lemon juice, lemon juice",0,Safe
+"evaporated cane juice, whole wheat flour, cocoa, sea salt, vanilla",0,Caution
+"lentils, carrots, tomatoes, onion, turmeric, water, organic cane sugar",0,Safe
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, artificial color",1,Avoid
+"brown rice, black beans, olive oil, garlic, cumin",0,Safe
+"salmon, lemon, dill, olive oil, garlic, apple cider vinegar",0,Safe
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla, artificial color",1,Avoid
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla",1,Avoid
+"almonds, cashews, walnuts, pumpkin seeds, raisins",0,Safe
+"brown rice, black beans, olive oil, garlic, cumin, organic cane sugar",0,Safe
+"sodium nitrite, sodium phosphate, corn syrup, dextrose, modified corn starch, msg monosodium glutamate",1,Avoid
+"oat flour, banana, eggs, vanilla extract, baking powder, spices",0,Safe
+"air popped popcorn, nutritional yeast, sea salt, spices",0,Safe
+"almonds, cashews, walnuts, pumpkin seeds, raisins, organic cane sugar",0,Safe
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, high fructose corn syrup",1,Avoid
+"whole wheat flour, water, yeast, salt, sea salt",0,Safe
+"egg whites, spinach, mushrooms, onion, garlic",0,Safe
+"whole wheat flour, water, yeast, salt, apple cider vinegar",0,Safe
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, high fructose corn syrup",1,Avoid
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha, sodium benzoate",1,Avoid
+"high fructose corn syrup, caramel color, phosphoric acid, natural flavors, sodium benzoate",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, high fructose corn syrup",1,Avoid
+"turkey breast, lettuce, tomato, mustard, whole grain bread, spices",0,Safe
+"water, whole grain oats, natural honey, blueberries, almonds, organic cane sugar",0,Safe
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha, bht bha tbhq",1,Avoid
+"sodium benzoate, potassium sorbate, citric acid, caramel color, phosphoric acid, artificial color",1,Avoid
+"hummus, olive oil, lemon, garlic, chickpeas, tahini, apple cider vinegar",0,Safe
+"hummus, olive oil, lemon, garlic, chickpeas, tahini, sea salt",0,Safe
+"butylated hydroxytoluene, butylated hydroxyanisole, propyl gallate, tbhq, msg monosodium glutamate",1,Avoid
+"hummus, olive oil, lemon, garlic, chickpeas, tahini, spices",0,Safe
+"edamame, sea salt, organic cane sugar",0,Safe
+"modified starch, sodium nitrite, carmine, aspartame, potassium sorbate, artificial color",1,Avoid
+"skim milk, oats, blueberries, flaxseed",0,Safe
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1, high fructose corn syrup",1,Avoid
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, high fructose corn syrup",1,Avoid
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha",1,Avoid
+"black bean soup, cumin, cayenne, lime, apple cider vinegar",0,Safe
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, msg monosodium glutamate",1,Avoid
+"greek yogurt, strawberries, granola, honey",0,Safe
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, msg monosodium glutamate",1,Avoid
+"beet, carrot, apple, ginger, lemon juice, sea salt",0,Safe
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471, artificial color",1,Avoid
+"sugar, palm oil, artificial colors, maltodextrin, monosodium glutamate, high fructose corn syrup",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211",1,Avoid
+"tempeh, tamari, sesame oil, garlic, ginger, spices",0,Safe
+"sugar, milk chocolate, palm kernel oil, soy lecithin, vanillin artificial flavor",1,Avoid
+"sugar, maltitol, palm oil, cocoa powder, vanillin, e471 e476 lecithin, bht bha tbhq",1,Avoid
+"black bean soup, cumin, cayenne, lime, lemon juice",0,Safe
+"beet, carrot, apple, ginger, lemon juice, lemon juice",0,Safe
+"bleached flour, shortening, dextrose, artificial sweetener, e102 e110, msg monosodium glutamate",1,Avoid
+"monosodium glutamate, disodium guanylate, disodium inosinate, sodium diacetate, msg monosodium glutamate",1,Avoid
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha, msg monosodium glutamate",1,Avoid
+"sodium benzoate, potassium sorbate, citric acid, caramel color, phosphoric acid, bht bha tbhq",1,Avoid
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, sodium benzoate",1,Avoid
+"artificial sweeteners aspartame saccharin acesulfame, food dyes fd c red 3, high fructose corn syrup",1,Avoid
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, artificial color",1,Avoid
+"sweet potato, olive oil, rosemary, sea salt, lemon juice",0,Safe
+"turkey breast, lettuce, tomato, mustard, whole grain bread, organic cane sugar",0,Safe
+"orange, grapefruit, lemon, sparkling water, apple cider vinegar",0,Safe
+"turkey breast, lettuce, tomato, mustard, whole grain bread, apple cider vinegar",0,Safe
+"quinoa, chickpeas, parsley, olive oil, lemon, apple cider vinegar",0,Safe
+"skim milk, oats, blueberries, flaxseed, lemon juice",0,Safe
+"corn syrup solids, trans fat, sucralose, acesulfame potassium, tartrazine, artificial color",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, sodium benzoate",1,Avoid
+"edamame, sea salt, organic cane sugar",0,Safe
+"sodium nitrite, sodium phosphate, corn syrup, dextrose, modified corn starch, sodium benzoate",1,Avoid
+"salmon, lemon, dill, olive oil, garlic, apple cider vinegar",0,Safe
+"sodium benzoate, potassium sorbate, citric acid, caramel color, phosphoric acid",1,Avoid
+"black bean soup, cumin, cayenne, lime, sea salt",0,Safe
+"whole grain pasta, tomatoes, basil, olive oil, garlic, lemon juice",0,Safe
+"spinach, kale, cucumber, celery, ginger, lemon, organic cane sugar",0,Safe
+"oat flour, banana, eggs, vanilla extract, baking powder, sea salt",0,Safe
+"sodium benzoate, potassium sorbate, citric acid, caramel color, phosphoric acid, sodium benzoate",1,Avoid
+"modified starch, sodium nitrite, carmine, aspartame, potassium sorbate, sodium benzoate",1,Avoid
+"air popped popcorn, nutritional yeast, sea salt, lemon juice",0,Safe
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, sodium benzoate",1,Avoid
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha, sodium benzoate",1,Avoid
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, artificial color",1,Avoid
+"almonds, cashews, walnuts, pumpkin seeds, raisins, lemon juice",0,Safe
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, high fructose corn syrup",1,Avoid
+"whole wheat flour, water, yeast, salt, apple cider vinegar",0,Safe
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, sodium benzoate",1,Avoid
+"edamame, sea salt, sea salt",0,Safe
+"avocado, tomato, onion, cilantro, lime juice, salt, spices",0,Safe
+"sweet potato, olive oil, rosemary, sea salt",0,Safe
+"whole wheat flour, water, yeast, salt, sea salt",0,Safe
+"tofu, broccoli, soy sauce, garlic, ginger, sesame oil, spices",0,Safe
+"spinach, kale, cucumber, celery, ginger, lemon, sea salt",0,Safe
+"sweet potato, olive oil, rosemary, sea salt, apple cider vinegar",0,Safe
+"quinoa, chickpeas, parsley, olive oil, lemon, apple cider vinegar",0,Safe
+"water, whole grain oats, natural honey, blueberries, almonds, lemon juice",0,Safe
+"tofu, broccoli, soy sauce, garlic, ginger, sesame oil, organic cane sugar",0,Safe
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, bht bha tbhq",1,Avoid
+"butylated hydroxytoluene, butylated hydroxyanisole, propyl gallate, tbhq, bht bha tbhq",1,Avoid
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, msg monosodium glutamate",1,Avoid
+"tempeh, tamari, sesame oil, garlic, ginger, apple cider vinegar",0,Safe
+"egg whites, spinach, mushrooms, onion, garlic, spices",0,Safe
+"plain oatmeal, chia seeds, almond milk, banana",0,Safe
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, high fructose corn syrup",1,Avoid
+"glucose syrup, cocoa butter, milk powder, emulsifiers e471 e472, vanillin",1,Avoid
+"chia seeds, almond milk, vanilla, maple syrup, organic cane sugar",0,Safe
+"corn syrup solids, trans fat, sucralose, acesulfame potassium, tartrazine, high fructose corn syrup",1,Avoid
+"glucose syrup, cocoa butter, milk powder, emulsifiers e471 e472, vanillin, high fructose corn syrup",1,Avoid
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1, msg monosodium glutamate",1,Avoid
+"corn syrup solids, hydrogenated coconut oil, sodium caseinate, dipotassium phosphate, bht bha tbhq",1,Avoid
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471, high fructose corn syrup",1,Avoid
+"spinach, kale, cucumber, celery, ginger, lemon, apple cider vinegar",0,Safe
+"lentils, carrots, tomatoes, onion, turmeric, water, apple cider vinegar",0,Safe
+"black bean soup, cumin, cayenne, lime, organic cane sugar",0,Safe
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, msg monosodium glutamate",1,Avoid
+"edamame, sea salt, apple cider vinegar",0,Safe
+"processed cheese, sodium phosphate, sorbic acid, artificial color, carmine",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, sodium benzoate",1,Avoid
+"sugar, maltitol, palm oil, cocoa powder, vanillin, e471 e476 lecithin, artificial color",1,Avoid
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1",1,Avoid
+"sugar, maltitol, palm oil, cocoa powder, vanillin, e471 e476 lecithin, high fructose corn syrup",1,Avoid
+"glucose syrup, cocoa butter, milk powder, emulsifiers e471 e472, vanillin, bht bha tbhq",1,Avoid
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin, bht bha tbhq",1,Avoid
+"soy flour, glucose, salt, natural flavors, sunflower lecithin",0,Caution
+"turkey breast, lettuce, tomato, mustard, whole grain bread, spices",0,Safe
+"glucose syrup, cocoa butter, milk powder, emulsifiers e471 e472, vanillin, bht bha tbhq",1,Avoid
+"whole wheat, milk, sugar, eggs, natural vanilla, butter",0,Caution
+"chicken breast, brown rice, steamed broccoli, olive oil, organic cane sugar",0,Safe
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471, artificial color",1,Avoid
+"orange, grapefruit, lemon, sparkling water, spices",0,Safe
+"high fructose corn syrup, caramel color, phosphoric acid, natural flavors, sodium benzoate",1,Avoid
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla, bht bha tbhq",1,Avoid
+"plain oatmeal, chia seeds, almond milk, banana, apple cider vinegar",0,Safe
+"monosodium glutamate, disodium guanylate, disodium inosinate, sodium diacetate, bht bha tbhq",1,Avoid
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha, high fructose corn syrup",1,Avoid
+"chicken breast, brown rice, steamed broccoli, olive oil, organic cane sugar",0,Safe
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, msg monosodium glutamate",1,Avoid
+"hummus, olive oil, lemon, garlic, chickpeas, tahini, organic cane sugar",0,Safe
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471, sodium benzoate",1,Avoid
+"air popped popcorn, nutritional yeast, sea salt, apple cider vinegar",0,Safe
+"organic apples, cinnamon, lemon juice, lemon juice",0,Safe
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1, msg monosodium glutamate",1,Avoid
+"brown rice, black beans, olive oil, garlic, cumin, organic cane sugar",0,Safe
+"whole grain pasta, tomatoes, basil, olive oil, garlic, lemon juice",0,Safe
+"chia seeds, almond milk, vanilla, maple syrup, organic cane sugar",0,Safe
+"coconut water, lime, mint",0,Safe
+"skim milk, oats, blueberries, flaxseed, lemon juice",0,Safe
+"processed cheese, sodium phosphate, sorbic acid, artificial color, carmine, bht bha tbhq",1,Avoid
+"plain oatmeal, chia seeds, almond milk, banana, sea salt",0,Safe
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, msg monosodium glutamate",1,Avoid
+"edamame, sea salt, organic cane sugar",0,Safe
+"tempeh, tamari, sesame oil, garlic, ginger",0,Safe
+"avocado, tomato, onion, cilantro, lime juice, salt, spices",0,Safe
+"sugar, palm oil, artificial colors, maltodextrin, monosodium glutamate, sodium benzoate",1,Avoid
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla, bht bha tbhq",1,Avoid
+"greek yogurt, strawberries, granola, honey, apple cider vinegar",0,Safe
+"organic apples, cinnamon, lemon juice, spices",0,Safe
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, artificial color",1,Avoid
+"air popped popcorn, nutritional yeast, sea salt, apple cider vinegar",0,Safe
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, sodium benzoate",1,Avoid
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, sodium benzoate",1,Avoid
+"oat flour, banana, eggs, vanilla extract, baking powder",0,Safe
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, high fructose corn syrup",1,Avoid
+"air popped popcorn, nutritional yeast, sea salt",0,Safe
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, artificial color",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, bht bha tbhq",1,Avoid
+"sugar, milk chocolate, palm kernel oil, soy lecithin, vanillin artificial flavor, artificial color",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, msg monosodium glutamate",1,Avoid
+"coconut water, lime, mint, apple cider vinegar",0,Safe
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, high fructose corn syrup",1,Avoid
+"quinoa, chickpeas, parsley, olive oil, lemon, organic cane sugar",0,Safe
+"high fructose corn syrup, caramel color, phosphoric acid, natural flavors, artificial color",1,Avoid
+"sugar, milk chocolate, palm kernel oil, soy lecithin, vanillin artificial flavor, artificial color",1,Avoid
+"tempeh, tamari, sesame oil, garlic, ginger, organic cane sugar",0,Safe
+"orange, grapefruit, lemon, sparkling water",0,Safe
+"artificial sweeteners aspartame saccharin acesulfame, food dyes fd c red 3, high fructose corn syrup",1,Avoid
+"quinoa, chickpeas, parsley, olive oil, lemon",0,Safe
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha, msg monosodium glutamate",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, sea salt",0,Safe
+"white flour, sugar, partially hydrogenated soybean oil, artificial vanilla, bha bht, bht bha tbhq",1,Avoid
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, bht bha tbhq",1,Avoid
+"whole grain pasta, tomatoes, basil, olive oil, garlic, lemon juice",0,Safe
+"whole grain pasta, tomatoes, basil, olive oil, garlic",0,Safe
+"tempeh, tamari, sesame oil, garlic, ginger, organic cane sugar",0,Safe
+"air popped popcorn, nutritional yeast, sea salt, organic cane sugar",0,Safe
+"enriched flour, sugar, corn syrup, soybean oil, salt, tbhq, artificial color, artificial color",1,Avoid
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin, bht bha tbhq",1,Avoid
+"modified starch, sodium nitrite, carmine, aspartame, potassium sorbate, msg monosodium glutamate",1,Avoid
+"lentils, carrots, tomatoes, onion, turmeric, water, organic cane sugar",0,Safe
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla, msg monosodium glutamate",1,Avoid
+"black bean soup, cumin, cayenne, lime, organic cane sugar",0,Safe
+"coconut water, lime, mint, lemon juice",0,Safe
+"butylated hydroxytoluene, butylated hydroxyanisole, propyl gallate, tbhq, msg monosodium glutamate",1,Avoid
+"corn syrup solids, hydrogenated coconut oil, sodium caseinate, dipotassium phosphate, msg monosodium glutamate",1,Avoid
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6",1,Avoid
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate, high fructose corn syrup",1,Avoid
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate, bht bha tbhq",1,Avoid
+"brown rice, black beans, olive oil, garlic, cumin, apple cider vinegar",0,Safe
+"oat flour, banana, eggs, vanilla extract, baking powder, organic cane sugar",0,Safe
+"skim milk, oats, blueberries, flaxseed, apple cider vinegar",0,Safe
+"orange, grapefruit, lemon, sparkling water, lemon juice",0,Safe
+"coconut water, lime, mint, sea salt",0,Safe
+"sugar, milk chocolate, palm kernel oil, soy lecithin, vanillin artificial flavor, msg monosodium glutamate",1,Avoid
+"water, whole grain oats, natural honey, blueberries, almonds, lemon juice",0,Safe
+"high fructose corn syrup, caramel color, phosphoric acid, natural flavors, high fructose corn syrup",1,Avoid
+"lentils, carrots, tomatoes, onion, turmeric, water, spices",0,Safe
+"modified starch, sodium nitrite, carmine, aspartame, potassium sorbate, sodium benzoate",1,Avoid
+"orange, grapefruit, lemon, sparkling water, sea salt",0,Safe
+"chia seeds, almond milk, vanilla, maple syrup",0,Safe
+"turkey breast, lettuce, tomato, mustard, whole grain bread, sea salt",0,Safe
+"egg whites, spinach, mushrooms, onion, garlic, lemon juice",0,Safe
+"hummus, olive oil, lemon, garlic, chickpeas, tahini",0,Safe
+"processed cheese, sodium phosphate, sorbic acid, artificial color, carmine, bht bha tbhq",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, bht bha tbhq",1,Avoid
+"greek yogurt, strawberries, granola, honey, sea salt",0,Safe
+"hummus, olive oil, lemon, garlic, chickpeas, tahini, apple cider vinegar",0,Safe
+"salmon, lemon, dill, olive oil, garlic, sea salt",0,Safe
+"sweet potato, olive oil, rosemary, sea salt, apple cider vinegar",0,Safe
+"corn syrup solids, hydrogenated coconut oil, sodium caseinate, dipotassium phosphate, msg monosodium glutamate",1,Avoid
+"skim milk, oats, blueberries, flaxseed, sea salt",0,Safe
+"processed cheese, sodium phosphate, sorbic acid, artificial color, carmine, artificial color",1,Avoid
+"beet, carrot, apple, ginger, lemon juice, apple cider vinegar",0,Safe
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, sodium benzoate",1,Avoid
+"salmon, lemon, dill, olive oil, garlic, sea salt",0,Safe
+"corn syrup solids, hydrogenated coconut oil, sodium caseinate, dipotassium phosphate, msg monosodium glutamate",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, lemon juice",0,Safe
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, bht bha tbhq",1,Avoid
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, bht bha tbhq",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, apple cider vinegar",0,Safe
+"orange, grapefruit, lemon, sparkling water, apple cider vinegar",0,Safe
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, artificial color",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, sodium benzoate",1,Avoid
+"glucose syrup, cocoa butter, milk powder, emulsifiers e471 e472, vanillin, sodium benzoate",1,Avoid
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, high fructose corn syrup",1,Avoid
+"plain oatmeal, chia seeds, almond milk, banana, apple cider vinegar",0,Safe
+"sugar, milk chocolate, palm kernel oil, soy lecithin, vanillin artificial flavor, high fructose corn syrup",1,Avoid
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1, msg monosodium glutamate",1,Avoid
+"modified starch, sodium nitrite, carmine, aspartame, potassium sorbate, sodium benzoate",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, high fructose corn syrup",1,Avoid
+"coconut water, lime, mint, apple cider vinegar",0,Safe
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin, sodium benzoate",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, sea salt",0,Safe
+"chia seeds, almond milk, vanilla, maple syrup, apple cider vinegar",0,Safe
+"enriched flour, sugar, corn syrup, soybean oil, salt, tbhq, artificial color, sodium benzoate",1,Avoid
+"tofu, broccoli, soy sauce, garlic, ginger, sesame oil, lemon juice",0,Safe
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, msg monosodium glutamate",1,Avoid
+"chia seeds, almond milk, vanilla, maple syrup, spices",0,Safe
+"sweet potato, olive oil, rosemary, sea salt, apple cider vinegar",0,Safe
+"beet, carrot, apple, ginger, lemon juice, spices",0,Safe
+"processed cheese, sodium phosphate, sorbic acid, artificial color, carmine, artificial color",1,Avoid
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, artificial color",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, artificial color",1,Avoid
+"spinach, kale, cucumber, celery, ginger, lemon",0,Safe
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, bht bha tbhq",1,Avoid
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1, msg monosodium glutamate",1,Avoid
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha, artificial color",1,Avoid
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, artificial color",1,Avoid
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin, high fructose corn syrup",1,Avoid
+"salmon, lemon, dill, olive oil, garlic",0,Safe
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, artificial color",1,Avoid
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, high fructose corn syrup",1,Avoid
+"hydrogenated cottonseed oil, high fructose corn syrup, artificial color blue 1, high fructose corn syrup",1,Avoid
+"quinoa, chickpeas, parsley, olive oil, lemon, apple cider vinegar",0,Safe
+"whole grain pasta, tomatoes, basil, olive oil, garlic, lemon juice",0,Safe
+"processed cheese, sodium phosphate, sorbic acid, artificial color, carmine, bht bha tbhq",1,Avoid
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate, artificial color",1,Avoid
+"black bean soup, cumin, cayenne, lime, lemon juice",0,Safe
+"black bean soup, cumin, cayenne, lime, sea salt",0,Safe
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471, bht bha tbhq",1,Avoid
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, bht bha tbhq",1,Avoid
+"corn syrup solids, trans fat, sucralose, acesulfame potassium, tartrazine, msg monosodium glutamate",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, sea salt",0,Safe
+"brown rice, black beans, olive oil, garlic, cumin, spices",0,Safe
+"monosodium glutamate, disodium guanylate, disodium inosinate, sodium diacetate, bht bha tbhq",1,Avoid
+"spinach, kale, cucumber, celery, ginger, lemon, spices",0,Safe
+"sugar, palm oil, artificial colors, maltodextrin, monosodium glutamate, sodium benzoate",1,Avoid
+"oat flour, banana, eggs, vanilla extract, baking powder, apple cider vinegar",0,Safe
+"coconut water, lime, mint, lemon juice",0,Safe
+"hummus, olive oil, lemon, garlic, chickpeas, tahini, spices",0,Safe
+"orange, grapefruit, lemon, sparkling water, organic cane sugar",0,Safe
+"artificial sweeteners aspartame saccharin acesulfame, food dyes fd c red 3",1,Avoid
+"glucose syrup, cocoa butter, milk powder, emulsifiers e471 e472, vanillin, sodium benzoate",1,Avoid
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate, bht bha tbhq",1,Avoid
+"whole grain pasta, tomatoes, basil, olive oil, garlic, sea salt",0,Safe
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, artificial color",1,Avoid
+"white flour, sugar, partially hydrogenated soybean oil, artificial vanilla, bha bht, msg monosodium glutamate",1,Avoid
+"glucose syrup, cocoa butter, milk powder, emulsifiers e471 e472, vanillin, artificial color",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, high fructose corn syrup",1,Avoid
+"chia seeds, almond milk, vanilla, maple syrup, sea salt",0,Safe
+"tempeh, tamari, sesame oil, garlic, ginger, organic cane sugar",0,Safe
+"brown sugar, whole milk, eggs, vanilla, cocoa powder, butter",0,Caution
+"sugar, palm oil, artificial colors, maltodextrin, monosodium glutamate, artificial color",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, bht bha tbhq",1,Avoid
+"sugar, palm oil, artificial colors, maltodextrin, monosodium glutamate, high fructose corn syrup",1,Avoid
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, high fructose corn syrup",1,Avoid
+"beet, carrot, apple, ginger, lemon juice, lemon juice",0,Safe
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate",1,Avoid
+"water, whole grain oats, natural honey, blueberries, almonds, sea salt",0,Safe
+"chia seeds, almond milk, vanilla, maple syrup, sea salt",0,Safe
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, sodium benzoate",1,Avoid
+"enriched flour, sugar, corn syrup, soybean oil, salt, tbhq, artificial color",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, sea salt",0,Safe
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate",1,Avoid
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol",1,Avoid
+"tempeh, tamari, sesame oil, garlic, ginger, apple cider vinegar",0,Safe
+"modified starch, sodium nitrite, carmine, aspartame, potassium sorbate",1,Avoid
+"sweet potato, olive oil, rosemary, sea salt, spices",0,Safe
+"monosodium glutamate, disodium guanylate, disodium inosinate, sodium diacetate, msg monosodium glutamate",1,Avoid
+"sodium benzoate, potassium sorbate, citric acid, caramel color, phosphoric acid, artificial color",1,Avoid
+"tempeh, tamari, sesame oil, garlic, ginger, lemon juice",0,Safe
+"oat flour, banana, eggs, vanilla extract, baking powder, lemon juice",0,Safe
+"spinach, kale, cucumber, celery, ginger, lemon, organic cane sugar",0,Safe
+"coconut water, lime, mint, spices",0,Safe
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate, high fructose corn syrup",1,Avoid
+"monosodium glutamate, disodium guanylate, disodium inosinate, sodium diacetate, bht bha tbhq",1,Avoid
+"high fructose corn syrup, caramel color, phosphoric acid, natural flavors",1,Avoid
+"sugar, palm oil, artificial colors, maltodextrin, monosodium glutamate, bht bha tbhq",1,Avoid
+"almonds, cashews, walnuts, pumpkin seeds, raisins, spices",0,Safe
+"sweet potato, olive oil, rosemary, sea salt, apple cider vinegar",0,Safe
+"whole wheat flour, water, yeast, salt, lemon juice",0,Safe
+"monosodium glutamate, disodium guanylate, disodium inosinate, sodium diacetate, artificial color",1,Avoid
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, sodium benzoate",1,Avoid
+"modified starch, sodium nitrite, carmine, aspartame, potassium sorbate, bht bha tbhq",1,Avoid
+"chicken breast, brown rice, steamed broccoli, olive oil, lemon juice",0,Safe
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471, high fructose corn syrup",1,Avoid
+"air popped popcorn, nutritional yeast, sea salt, organic cane sugar",0,Safe
+"orange, grapefruit, lemon, sparkling water, spices",0,Safe
+"artificial sweeteners aspartame saccharin acesulfame, food dyes fd c red 3, msg monosodium glutamate",1,Avoid
+"glucose syrup, cocoa butter, milk powder, emulsifiers e471 e472, vanillin, sodium benzoate",1,Avoid
+"hummus, olive oil, lemon, garlic, chickpeas, tahini, organic cane sugar",0,Safe
+"organic apples, cinnamon, lemon juice, spices",0,Safe
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, organic cane sugar",0,Safe
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, high fructose corn syrup",1,Avoid
+"chia seeds, almond milk, vanilla, maple syrup, apple cider vinegar",0,Safe
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, high fructose corn syrup",1,Avoid
+"spinach, kale, cucumber, celery, ginger, lemon, organic cane sugar",0,Safe
+"sugar, milk chocolate, palm kernel oil, soy lecithin, vanillin artificial flavor, bht bha tbhq",1,Avoid
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, high fructose corn syrup",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, organic cane sugar",0,Safe
+"egg whites, spinach, mushrooms, onion, garlic, spices",0,Safe
+"enriched flour, sugar, corn syrup, soybean oil, salt, tbhq, artificial color, msg monosodium glutamate",1,Avoid
+"turkey breast, lettuce, tomato, mustard, whole grain bread, apple cider vinegar",0,Safe
+"enriched flour, sugar, corn syrup, soybean oil, salt, tbhq, artificial color, artificial color",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, spices",0,Safe
+"whole grain pasta, tomatoes, basil, olive oil, garlic, spices",0,Safe
+"corn syrup solids, hydrogenated coconut oil, sodium caseinate, dipotassium phosphate, artificial color",1,Avoid
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin, bht bha tbhq",1,Avoid
+"corn syrup solids, trans fat, sucralose, acesulfame potassium, tartrazine",1,Avoid
+"sweet potato, olive oil, rosemary, sea salt, lemon juice",0,Safe
+"sodium nitrite, sodium phosphate, corn syrup, dextrose, modified corn starch, bht bha tbhq",1,Avoid
+"plain oatmeal, chia seeds, almond milk, banana, sea salt",0,Safe
+"sodium nitrite, sodium phosphate, corn syrup, dextrose, modified corn starch",1,Avoid
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk",1,Avoid
+"butylated hydroxytoluene, butylated hydroxyanisole, propyl gallate, tbhq, msg monosodium glutamate",1,Avoid
+"enriched flour, sugar, corn syrup, soybean oil, salt, tbhq, artificial color, bht bha tbhq",1,Avoid
+"water, whole grain oats, natural honey, blueberries, almonds, sea salt",0,Safe
+"quinoa, chickpeas, parsley, olive oil, lemon, sea salt",0,Safe
+"sodium nitrate, dextrose, modified food starch, carrageenan, lactic acid starter, artificial color",1,Avoid
+"skim milk, oats, blueberries, flaxseed, spices",0,Safe
+"tofu, broccoli, soy sauce, garlic, ginger, sesame oil, spices",0,Safe
+"lentils, carrots, tomatoes, onion, turmeric, water, organic cane sugar",0,Safe
+"sugar, palm oil, artificial colors, maltodextrin, monosodium glutamate",1,Avoid
+"chicken breast, brown rice, steamed broccoli, olive oil",0,Safe
+"brown rice, black beans, olive oil, garlic, cumin, lemon juice",0,Safe
+"sugar, partially hydrogenated palm oil, whey, artificial color, propylene glycol, bht bha tbhq",1,Avoid
+"sodium benzoate, potassium sorbate, citric acid, caramel color, phosphoric acid, msg monosodium glutamate",1,Avoid
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, high fructose corn syrup",1,Avoid
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, sodium benzoate",1,Avoid
+"edamame, sea salt, organic cane sugar",0,Safe
+"brown rice, black beans, olive oil, garlic, cumin, sea salt",0,Safe
+"edamame, sea salt",0,Safe
+"air popped popcorn, nutritional yeast, sea salt, spices",0,Safe
+"tempeh, tamari, sesame oil, garlic, ginger, sea salt",0,Safe
+"orange, grapefruit, lemon, sparkling water, lemon juice",0,Safe
+"sweet potato, olive oil, rosemary, sea salt, spices",0,Safe
+"monosodium glutamate, disodium guanylate, disodium inosinate, sodium diacetate",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, sodium benzoate",1,Avoid
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla, sodium benzoate",1,Avoid
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin, msg monosodium glutamate",1,Avoid
+"modified potato starch, monosodium glutamate, artificial flavor, disodium inosinate, sodium benzoate",1,Avoid
+"white flour, sugar, partially hydrogenated soybean oil, artificial vanilla, bha bht, high fructose corn syrup",1,Avoid
+"orange, grapefruit, lemon, sparkling water, lemon juice",0,Safe
+"white flour, sugar, partially hydrogenated soybean oil, artificial vanilla, bha bht",1,Avoid
+"water, whole grain oats, natural honey, blueberries, almonds, lemon juice",0,Safe
+"corn syrup solids, hydrogenated coconut oil, sodium caseinate, dipotassium phosphate",1,Avoid
+"brown rice, black beans, olive oil, garlic, cumin, apple cider vinegar",0,Safe
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471, sodium benzoate",1,Avoid
+"orange, grapefruit, lemon, sparkling water, lemon juice",0,Safe
+"corn syrup, glucose, gelatin, artificial flavors, yellow 5 yellow 6, high fructose corn syrup",1,Avoid
+"beet, carrot, apple, ginger, lemon juice",0,Safe
+"sugar, maltitol, palm oil, cocoa powder, vanillin, e471 e476 lecithin, bht bha tbhq",1,Avoid
+"chia seeds, almond milk, vanilla, maple syrup, lemon juice",0,Safe
+"avocado, tomato, onion, cilantro, lime juice, salt",0,Safe
+"organic apples, cinnamon, lemon juice, sea salt",0,Safe
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate, high fructose corn syrup",1,Avoid
+"sodium nitrite, sodium phosphate, corn syrup, dextrose, modified corn starch, sodium benzoate",1,Avoid
+"avocado, tomato, onion, cilantro, lime juice, salt, apple cider vinegar",0,Safe
+"corn syrup solids, trans fat, sucralose, acesulfame potassium, tartrazine, sodium benzoate",1,Avoid
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin, msg monosodium glutamate",1,Avoid
+"lentils, carrots, tomatoes, onion, turmeric, water",0,Safe
+"whole grain wheat, malt syrup, salt, sugar, nonfat milk",0,Caution
+"tofu, broccoli, soy sauce, garlic, ginger, sesame oil",0,Safe
+"whole grain pasta, tomatoes, basil, olive oil, garlic, organic cane sugar",0,Safe
+"artificial sweeteners aspartame saccharin acesulfame, food dyes fd c red 3, bht bha tbhq",1,Avoid
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin",1,Avoid
+"black bean soup, cumin, cayenne, lime, lemon juice",0,Safe
+"modified starch, sodium nitrite, carmine, aspartame, potassium sorbate, bht bha tbhq",1,Avoid
+"black bean soup, cumin, cayenne, lime, spices",0,Safe
+"hummus, olive oil, lemon, garlic, chickpeas, tahini, spices",0,Safe
+"wheat flour, sugar, canola oil, salt, egg, milk",0,Caution
+"sugar, milk chocolate, palm kernel oil, soy lecithin, vanillin artificial flavor, sodium benzoate",1,Avoid
+"glucose fructose syrup, acidity regulator e330, colorings e150d e160a, e211, high fructose corn syrup",1,Avoid
+"brown rice, black beans, olive oil, garlic, cumin, spices",0,Safe
+"organic apples, cinnamon, lemon juice",0,Safe
+"greek yogurt, strawberries, granola, honey, apple cider vinegar",0,Safe
+"lentils, carrots, tomatoes, onion, turmeric, water, spices",0,Safe
+"enriched flour, sugar, soybean oil, salt, tbhq, nonfat milk, artificial color",1,Avoid
+"water, whole grain oats, natural honey, blueberries, almonds, spices",0,Safe
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla, bht bha tbhq",1,Avoid
+"brown rice, black beans, olive oil, garlic, cumin, spices",0,Safe
+"spinach, kale, cucumber, celery, ginger, lemon, lemon juice",0,Safe
+"orange, grapefruit, lemon, sparkling water, organic cane sugar",0,Safe
+"salmon, lemon, dill, olive oil, garlic, spices",0,Safe
+"tofu, broccoli, soy sauce, garlic, ginger, sesame oil, spices",0,Safe
+"oat flour, banana, eggs, vanilla extract, baking powder, lemon juice",0,Safe
+"tofu, broccoli, soy sauce, garlic, ginger, sesame oil, spices",0,Safe
+"bleached wheat flour, sugar, leavening, soybean oil, artificial flavor, bha, msg monosodium glutamate",1,Avoid
+"sodium benzoate, potassium sorbate, acesulfame k, sucralose, red 40 lake, high fructose corn syrup",1,Avoid
+"hydrogenated vegetable oil, sugar, skim milk powder, sodium caseinate, e471, sodium benzoate",1,Avoid
+"bleached flour, shortening, dextrose, artificial sweetener, e102 e110",1,Avoid
+"plain oatmeal, chia seeds, almond milk, banana, lemon juice",0,Safe
+"sugar, palm fat, whey powder, skimmed milk powder, soy lecithin, pgpr vanillin, bht bha tbhq",1,Avoid
+"coconut water, lime, mint, sea salt",0,Safe
+"pasteurized milk, cream, salt, cheese cultures, enzymes",0,Caution
+"corn syrup solids, trans fat, sucralose, acesulfame potassium, tartrazine, high fructose corn syrup",1,Avoid
+"corn syrup solids, hydrogenated coconut oil, sodium caseinate, dipotassium phosphate, msg monosodium glutamate",1,Avoid
+"high fructose corn syrup, hydrogenated oil, artificial flavors, red 40, sodium benzoate, msg monosodium glutamate",1,Avoid
+"turkey breast, lettuce, tomato, mustard, whole grain bread",0,Safe
+"whole wheat flour, water, yeast, salt",0,Safe
+"partially hydrogenated soybean oil, high fructose corn syrup, artificial vanilla, high fructose corn syrup",1,Avoid
+"lentils, carrots, tomatoes, onion, turmeric, water, apple cider vinegar",0,Safe
+"chicken breast, brown rice, steamed broccoli, olive oil, apple cider vinegar",0,Safe
+"brown rice, black beans, olive oil, garlic, cumin, sea salt",0,Safe
+"high fructose corn syrup, caramel color, phosphoric acid, natural flavors, msg monosodium glutamate",1,Avoid
+"sugar, maltitol, palm oil, cocoa powder, vanillin, e471 e476 lecithin",1,Avoid
