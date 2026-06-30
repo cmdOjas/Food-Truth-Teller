@@ -1,137 +1,71 @@
-// Shared TypeScript types for the Food Truth Teller app
-
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-  is_active: boolean;
-  created_at: string;
-}
-
 export interface UserProfile {
-  user_id: number;
-  age?: number;
-  gender?: 'male' | 'female' | 'other';
-  weight_kg?: number;
-  height_cm?: number;
-  bmi?: number;
-  health_conditions: string[];
-  allergies: string[];
-  diet_preference?: string;
-  goals: string[];
-  updated_at?: string;
-}
-
-export interface NutritionPer100g {
-  energy_kcal?: number;
-  proteins_g?: number;
-  carbohydrates_g?: number;
-  sugars_g?: number;
-  fat_g?: number;
-  saturated_fat_g?: number;
-  fiber_g?: number;
-  sodium_mg?: number;
-  salt_g?: number;
+  id: number
+  name: string
+  age?: number
+  gender?: string
+  weight?: number
+  diseases: string[]
+  allergies: string[]
+  diet_type: 'vegetarian' | 'non-vegetarian' | 'vegan'
+  created_at?: string
 }
 
 export interface Product {
-  id: number;
-  barcode: string;
-  name: string;
-  brand?: string;
-  category?: string;
-  ingredients_text?: string;
-  ingredients_parsed: Array<{ text: string; id: string }>;
-  nutrition_per_100g: NutritionPer100g;
-  image_url?: string;
-  is_vegetarian: boolean;
-  is_vegan: boolean;
-  nutriscore_grade?: 'a' | 'b' | 'c' | 'd' | 'e';
-  nova_group?: 1 | 2 | 3 | 4;
-  allergens: string[];
-  additives: string[];
-  labels: string[];
-  source: string;
-  created_at: string;
+  id?: number
+  barcode: string
+  product_name: string
+  brand?: string
+  ingredients?: string
+  category?: string
+  is_vegetarian?: number
+  is_vegan?: number
+  per_100g_sugar?: number
+  per_100g_sodium?: number
+  image_url?: string
 }
 
-export interface AnalysisIssue {
-  ingredient: string;
-  reason: string;
-}
+export type Rating = 'safe' | 'caution' | 'avoid'
 
 export interface AnalysisResult {
-  prediction: 'Safe' | 'Caution' | 'Avoid';
-  confidence: number;
-  issues: AnalysisIssue[];
-  all_flags: Array<{
-    category: string;
-    detected_ingredients: string[];
-    risk_reasons: string[];
-    severity: 'high' | 'medium' | 'low';
-  }>;
-  nutriscore?: string;
-  nova_group?: number;
-  is_vegetarian: boolean;
-  is_vegan: boolean;
+  rating: Rating
+  confidence: number
+  probabilities: {
+    safe: number
+    caution: number
+    avoid: number
+  }
+  reasons: string[]
+  product: Product
+  user_name: string
+  ml_used: boolean
 }
 
 export interface ChatMessage {
-  id: number;
-  conversation_id: number;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  metadata: Record<string, unknown>;
-  created_at: string;
+  id: string
+  role: 'user' | 'bot'
+  content: string
+  timestamp: string
 }
 
-export interface Conversation {
-  id: number;
-  user_id: number;
-  title: string;
-  product_barcode?: string;
-  message_count: number;
-  created_at: string;
-}
+export const DISEASES_OPTIONS = [
+  { value: 'diabetes', label: 'Diabetes' },
+  { value: 'bp', label: 'High Blood Pressure' },
+  { value: 'celiac', label: 'Celiac Disease' },
+  { value: 'lactose intolerance', label: 'Lactose Intolerance' },
+  { value: 'heart disease', label: 'Heart Issues' },
+  { value: 'kidney disease', label: 'Kidney Issues' },
+]
 
-export interface AuthState {
-  token: string | null;
-  user: User | null;
-  isLoading: boolean;
-  error: string | null;
-}
+export const ALLERGIES_OPTIONS = [
+  { value: 'nuts', label: 'Nuts / Peanuts' },
+  { value: 'gluten', label: 'Gluten' },
+  { value: 'dairy', label: 'Dairy' },
+  { value: 'eggs', label: 'Eggs' },
+  { value: 'soy', label: 'Soy' },
+]
 
-export interface ProfileState {
-  profile: UserProfile | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface ProductState {
-  currentProduct: Product | null;
-  analysis: AnalysisResult | null;
-  recommendations: Product[];
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface ChatState {
-  conversations: Conversation[];
-  currentConversationId: number | null;
-  messages: ChatMessage[];
-  isStreaming: boolean;
-  error: string | null;
-}
-
-export type RootStackParamList = {
-  Auth: undefined;
-  Login: undefined;
-  Register: undefined;
-  Main: undefined;
-  Profile: undefined;
-  Scanner: undefined;
-  ProductDetail: { barcode: string };
-  Chat: { barcode?: string; conversationId?: number };
-  History: undefined;
-  Recommendations: undefined;
-};
+export const DIET_OPTIONS = [
+  { value: 'non-vegetarian', label: 'Non-Vegetarian' },
+  { value: 'vegetarian', label: 'Vegetarian' },
+  { value: 'vegan', label: 'Vegan' },
+]
