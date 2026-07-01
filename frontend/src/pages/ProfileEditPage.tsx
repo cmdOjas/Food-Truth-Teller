@@ -4,42 +4,41 @@ import { motion } from 'framer-motion'
 import { Save, LogOut, CheckCircle, User } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { profileApi } from '../services/api'
-import { DISEASES_OPTIONS, ALLERGIES_OPTIONS, DIET_OPTIONS, type UserProfile } from '../types'
+import { DISEASES_OPTIONS, ALLERGIES_OPTIONS, DIET_OPTIONS } from '../types'
+import { useTheme } from '../context/ThemeContext'
 
-const inputStyle = {
-  width: '100%', padding: '12px 16px', borderRadius: 10,
-  border: '2px solid #e5e7eb', fontSize: 15, fontFamily: 'inherit',
-  outline: 'none', background: 'white',
-}
-
-function CheckItem({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+function CheckItem({ label, checked, onChange, theme }: {
+  label: string; checked: boolean; onChange: (v: boolean) => void;
+  theme: ReturnType<typeof useTheme>['theme']
+}) {
   return (
     <motion.label
       whileTap={{ scale: 0.97 }}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
-        border: `2px solid ${checked ? '#22c55e' : '#e5e7eb'}`,
-        background: checked ? '#f0fdf4' : 'white',
+        border: `2px solid ${checked ? theme.green : theme.inputBorder}`,
+        background: checked ? theme.greenBg : theme.cardBg,
         transition: 'all 0.2s', marginBottom: 6,
       }}
     >
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ display: 'none' }} />
       <div style={{
         width: 20, height: 20, borderRadius: 5, flexShrink: 0,
-        border: `2px solid ${checked ? '#22c55e' : '#d1d5db'}`,
-        background: checked ? '#22c55e' : 'white',
+        border: `2px solid ${checked ? theme.green : theme.textSubtle}`,
+        background: checked ? theme.green : theme.inputBg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {checked && <CheckCircle size={13} color="white" fill="white" />}
       </div>
-      <span style={{ fontWeight: 500, fontSize: 14, color: '#374151' }}>{label}</span>
+      <span style={{ fontWeight: 500, fontSize: 14, color: theme.text }}>{label}</span>
     </motion.label>
   )
 }
 
 export default function ProfileEditPage() {
   const navigate = useNavigate()
+  const { theme } = useTheme()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -51,6 +50,12 @@ export default function ProfileEditPage() {
   })
 
   const userId = localStorage.getItem('user_id')
+
+  const inputStyle = {
+    width: '100%', padding: '12px 16px', borderRadius: 10,
+    border: `2px solid ${theme.inputBorder}`, fontSize: 15, fontFamily: 'inherit',
+    outline: 'none', background: theme.inputBg, color: theme.text,
+  }
 
   useEffect(() => {
     if (!userId) { navigate('/profile-setup'); return }
@@ -112,15 +117,21 @@ export default function ProfileEditPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <div style={{ minHeight: '100vh', background: theme.pageBg }}>
         <Navbar />
-        <div style={{ paddingTop: 100, textAlign: 'center', color: '#9ca3af' }}>Loading profile...</div>
+        <div style={{ paddingTop: 100, textAlign: 'center', color: theme.textSubtle }}>Loading profile...</div>
       </div>
     )
   }
 
+  const sectionStyle = {
+    background: theme.cardBg, borderRadius: 20, padding: '1.5rem',
+    boxShadow: theme.isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)',
+    border: `1px solid ${theme.cardBorder}`, marginBottom: 16,
+  }
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: theme.pageBg }}>
       <Navbar />
       <div style={{ paddingTop: 80, maxWidth: 580, margin: '0 auto', padding: '80px 1rem 3rem' }}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -134,8 +145,8 @@ export default function ProfileEditPage() {
               <User size={22} color="white" />
             </div>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827' }}>Your Profile</h1>
-              <p style={{ color: '#6b7280', fontSize: 14 }}>Update your health information</p>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: theme.text }}>Your Profile</h1>
+              <p style={{ color: theme.textMuted, fontSize: 14 }}>Update your health information</p>
             </div>
           </div>
 
@@ -146,9 +157,10 @@ export default function ProfileEditPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               style={{
-                background: '#dcfce7', color: '#16a34a', padding: '12px 16px',
+                background: theme.greenBg, color: theme.greenDark, padding: '12px 16px',
                 borderRadius: 10, marginBottom: 16, fontWeight: 600,
                 display: 'flex', alignItems: 'center', gap: 8,
+                border: `1px solid ${theme.isDark ? '#1a4a28' : '#bbf7d0'}`,
               }}
             >
               <CheckCircle size={18} /> Profile saved successfully!
@@ -156,38 +168,41 @@ export default function ProfileEditPage() {
           )}
 
           {error && (
-            <div style={{ background: '#fee2e2', color: '#dc2626', padding: '12px 16px', borderRadius: 10, marginBottom: 16, fontSize: 14 }}>
+            <div style={{
+              background: theme.isDark ? '#1f0a0a' : '#fee2e2',
+              color: '#dc2626', padding: '12px 16px', borderRadius: 10, marginBottom: 16, fontSize: 14,
+            }}>
               {error}
             </div>
           )}
 
           {/* Basic Info */}
-          <div style={{ background: 'white', borderRadius: 20, padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', marginBottom: 16 }}>
-            <h3 style={{ fontWeight: 700, fontSize: 16, color: '#111827', marginBottom: 16 }}>Basic Information</h3>
+          <div style={sectionStyle}>
+            <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 16 }}>Basic Information</h3>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>NAME *</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: theme.textMuted, marginBottom: 6 }}>NAME *</label>
               <input style={inputStyle} value={form.name} onChange={e => update('name', e.target.value)} placeholder="Your name" />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>AGE</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: theme.textMuted, marginBottom: 6 }}>AGE</label>
                 <input style={inputStyle} type="number" value={form.age} onChange={e => update('age', e.target.value)} placeholder="Age" min="1" max="120" />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>WEIGHT (kg)</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: theme.textMuted, marginBottom: 6 }}>WEIGHT (kg)</label>
                 <input style={inputStyle} type="number" value={form.weight} onChange={e => update('weight', e.target.value)} placeholder="Weight" />
               </div>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#6b7280', marginBottom: 8 }}>GENDER</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: theme.textMuted, marginBottom: 8 }}>GENDER</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {['Male', 'Female', 'Other'].map(g => (
                   <motion.button key={g} whileTap={{ scale: 0.95 }} onClick={() => update('gender', g.toLowerCase())}
                     style={{
                       flex: 1, padding: '10px', borderRadius: 8, cursor: 'pointer',
-                      border: `2px solid ${form.gender === g.toLowerCase() ? '#22c55e' : '#e5e7eb'}`,
-                      background: form.gender === g.toLowerCase() ? '#f0fdf4' : 'white',
-                      color: form.gender === g.toLowerCase() ? '#16a34a' : '#374151',
+                      border: `2px solid ${form.gender === g.toLowerCase() ? theme.green : theme.inputBorder}`,
+                      background: form.gender === g.toLowerCase() ? theme.greenBg : theme.inputBg,
+                      color: form.gender === g.toLowerCase() ? theme.greenDark : theme.text,
                       fontWeight: 600, fontSize: 14,
                     }}>
                     {g}
@@ -198,32 +213,32 @@ export default function ProfileEditPage() {
           </div>
 
           {/* Health Conditions */}
-          <div style={{ background: 'white', borderRadius: 20, padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', marginBottom: 16 }}>
-            <h3 style={{ fontWeight: 700, fontSize: 16, color: '#111827', marginBottom: 14 }}>Health Conditions</h3>
+          <div style={sectionStyle}>
+            <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 14 }}>Health Conditions</h3>
             {DISEASES_OPTIONS.map(opt => (
-              <CheckItem key={opt.value} label={opt.label} checked={form.diseases.includes(opt.value)} onChange={() => toggleList('diseases', opt.value)} />
+              <CheckItem key={opt.value} label={opt.label} checked={form.diseases.includes(opt.value)} onChange={() => toggleList('diseases', opt.value)} theme={theme} />
             ))}
           </div>
 
           {/* Allergies */}
-          <div style={{ background: 'white', borderRadius: 20, padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', marginBottom: 16 }}>
-            <h3 style={{ fontWeight: 700, fontSize: 16, color: '#111827', marginBottom: 14 }}>Food Allergies</h3>
+          <div style={sectionStyle}>
+            <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 14 }}>Food Allergies</h3>
             {ALLERGIES_OPTIONS.map(opt => (
-              <CheckItem key={opt.value} label={opt.label} checked={form.allergies.includes(opt.value)} onChange={() => toggleList('allergies', opt.value)} />
+              <CheckItem key={opt.value} label={opt.label} checked={form.allergies.includes(opt.value)} onChange={() => toggleList('allergies', opt.value)} theme={theme} />
             ))}
           </div>
 
           {/* Diet */}
-          <div style={{ background: 'white', borderRadius: 20, padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', marginBottom: 20 }}>
-            <h3 style={{ fontWeight: 700, fontSize: 16, color: '#111827', marginBottom: 14 }}>Dietary Preference</h3>
+          <div style={sectionStyle}>
+            <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 14 }}>Dietary Preference</h3>
             {DIET_OPTIONS.map(opt => (
               <motion.button key={opt.value} whileTap={{ scale: 0.97 }} onClick={() => update('diet_type', opt.value)}
                 style={{
                   width: '100%', padding: '14px', borderRadius: 10, marginBottom: 8,
                   cursor: 'pointer', textAlign: 'left', fontWeight: 600, fontSize: 15,
-                  border: `2px solid ${form.diet_type === opt.value ? '#22c55e' : '#e5e7eb'}`,
-                  background: form.diet_type === opt.value ? '#f0fdf4' : 'white',
-                  color: form.diet_type === opt.value ? '#16a34a' : '#374151',
+                  border: `2px solid ${form.diet_type === opt.value ? theme.green : theme.inputBorder}`,
+                  background: form.diet_type === opt.value ? theme.greenBg : theme.inputBg,
+                  color: form.diet_type === opt.value ? theme.greenDark : theme.text,
                 }}>
                 {opt.value === 'non-vegetarian' ? '🍗 ' : opt.value === 'vegetarian' ? '🌿 ' : '🌱 '}{opt.label}
               </motion.button>
@@ -253,7 +268,8 @@ export default function ProfileEditPage() {
             onClick={handleLogout}
             style={{
               width: '100%', padding: '14px', borderRadius: 12,
-              border: '2px solid #fee2e2', background: 'white',
+              border: `2px solid ${theme.isDark ? '#3b1212' : '#fee2e2'}`,
+              background: theme.isDark ? '#1a0808' : 'white',
               color: '#dc2626', fontWeight: 600, fontSize: 15, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}

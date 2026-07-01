@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ScanLine, ShieldCheck, Brain, ArrowRight, Leaf, Zap, Lock } from 'lucide-react'
 import Navbar from '../components/Navbar'
+import { useTheme } from '../context/ThemeContext'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -17,21 +18,24 @@ const steps = [
     title: 'Scan a Barcode',
     desc: 'Use your phone camera to scan any packaged food product barcode in seconds.',
     color: '#22c55e',
-    bg: '#f0fdf4',
+    lightBg: '#f0fdf4',
+    darkBg: '#0d2318',
   },
   {
     icon: Brain,
     title: 'AI Analysis',
     desc: 'Our ML model analyzes ingredients against your unique health profile and conditions.',
     color: '#8b5cf6',
-    bg: '#f5f3ff',
+    lightBg: '#f5f3ff',
+    darkBg: '#1a1040',
   },
   {
     icon: ShieldCheck,
     title: 'Get Your Rating',
     desc: 'Receive a personalized Safe / Caution / Avoid rating with plain-language explanations.',
     color: '#f59e0b',
-    bg: '#fffbeb',
+    lightBg: '#fffbeb',
+    darkBg: '#1f1a08',
   },
 ]
 
@@ -46,15 +50,16 @@ const floatingIcons = ['🥦', '🍎', '🥕', '🍋', '🫐', '🌽', '🍇', '
 export default function LandingPage() {
   const navigate = useNavigate()
   const hasProfile = !!localStorage.getItem('user_id')
+  const { theme } = useTheme()
 
   return (
-    <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', overflowX: 'hidden', background: theme.pageBg }}>
       <Navbar />
 
       {/* Hero Section */}
       <section style={{
         minHeight: '100vh',
-        background: 'linear-gradient(160deg, #f0fdf4 0%, #ffffff 50%, #f0fdf4 100%)',
+        background: theme.heroGradient,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', overflow: 'hidden',
         paddingTop: 80,
@@ -65,7 +70,7 @@ export default function LandingPage() {
             key={i}
             initial={{ opacity: 0, y: 0 }}
             animate={{
-              opacity: [0.3, 0.6, 0.3],
+              opacity: [0.2, 0.5, 0.2],
               y: [0, -20, 0],
               x: [0, i % 2 === 0 ? 10 : -10, 0],
             }}
@@ -85,27 +90,26 @@ export default function LandingPage() {
           </motion.div>
         ))}
 
-        {/* Large green glow blobs */}
+        {/* Green glow blobs */}
         <div style={{
           position: 'absolute', width: 500, height: 500,
-          borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.12) 0%, transparent 70%)',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.10) 0%, transparent 70%)',
           top: '10%', left: '-10%', pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute', width: 400, height: 400,
-          borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.10) 0%, transparent 70%)',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)',
           bottom: '10%', right: '-5%', pointerEvents: 'none',
         }} />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 800, margin: '0 auto', padding: '2rem 1.5rem', textAlign: 'center' }}>
-          <motion.div
-            initial="hidden" animate="visible" variants={fadeUp} custom={0}
-          >
+          <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: '#dcfce7', color: '#16a34a',
+              background: theme.greenBg, color: theme.greenDark,
               padding: '6px 14px', borderRadius: 999,
               fontSize: 14, fontWeight: 600, marginBottom: 24,
+              border: `1px solid ${theme.isDark ? '#1a4a28' : 'transparent'}`,
             }}>
               <Leaf size={14} />
               AI-Powered Food Analysis
@@ -117,7 +121,7 @@ export default function LandingPage() {
             style={{
               fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
               fontWeight: 900, lineHeight: 1.1,
-              color: '#111827', marginBottom: 24,
+              color: theme.text, marginBottom: 24,
               letterSpacing: '-0.02em',
             }}
           >
@@ -136,7 +140,7 @@ export default function LandingPage() {
             initial="hidden" animate="visible" variants={fadeUp} custom={2}
             style={{
               fontSize: 'clamp(1rem, 2vw, 1.25rem)',
-              color: '#6b7280', lineHeight: 1.8, marginBottom: 40,
+              color: theme.textMuted, lineHeight: 1.8, marginBottom: 40,
               maxWidth: 560, margin: '0 auto 40px',
             }}
           >
@@ -176,8 +180,8 @@ export default function LandingPage() {
               onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
-                background: 'white', color: '#374151',
-                border: '2px solid #e5e7eb',
+                background: theme.btnSecBg, color: theme.btnSecText,
+                border: `2px solid ${theme.btnSecBorder}`,
                 padding: '16px 28px', borderRadius: 12,
                 fontSize: 17, fontWeight: 600, cursor: 'pointer',
               }}
@@ -195,18 +199,16 @@ export default function LandingPage() {
           >
             <div style={{
               display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
-              background: 'white', borderRadius: 24,
-              padding: '24px', boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
-              border: '1px solid #e5e7eb', position: 'relative',
+              background: theme.cardBg, borderRadius: 24,
+              padding: '24px', boxShadow: theme.isDark ? '0 25px 60px rgba(0,0,0,0.5)' : '0 25px 60px rgba(0,0,0,0.12)',
+              border: `1px solid ${theme.cardBorder}`, position: 'relative',
             }}>
-              {/* Mock phone scanner UI */}
               <div style={{
                 width: 220, height: 160, borderRadius: 12,
-                background: '#f9fafb', display: 'flex', alignItems: 'center',
+                background: theme.pageBg, display: 'flex', alignItems: 'center',
                 justifyContent: 'center', position: 'relative', overflow: 'hidden',
-                border: '2px solid #e5e7eb',
+                border: `2px solid ${theme.cardBorder}`,
               }}>
-                {/* Corners */}
                 {[['0','0'], ['0','auto'], ['auto','0'], ['auto','auto']].map(([t,b], i) => (
                   <div key={i} style={{
                     position: 'absolute',
@@ -219,7 +221,6 @@ export default function LandingPage() {
                     borderRight: i % 2 !== 0 ? '3px solid #22c55e' : 'none',
                   }} />
                 ))}
-                {/* Scanning line */}
                 <motion.div
                   animate={{ y: [-50, 50, -50] }}
                   transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -229,10 +230,9 @@ export default function LandingPage() {
                     borderRadius: 1,
                   }}
                 />
-                {/* Barcode mock */}
-                <div style={{ display: 'flex', gap: 2, opacity: 0.4 }}>
+                <div style={{ display: 'flex', gap: 2, opacity: theme.isDark ? 0.6 : 0.4 }}>
                   {[3,1,2,4,1,3,2,1,4,2,3,1].map((w, i) => (
-                    <div key={i} style={{ width: w * 3, height: 60, background: '#374151', borderRadius: 1 }} />
+                    <div key={i} style={{ width: w * 3, height: 60, background: theme.text, borderRadius: 1 }} />
                   ))}
                 </div>
               </div>
@@ -241,7 +241,7 @@ export default function LandingPage() {
                 transition={{ duration: 2, repeat: Infinity }}
                 style={{
                   marginTop: 12, display: 'flex', alignItems: 'center', gap: 6,
-                  background: '#dcfce7', color: '#16a34a',
+                  background: theme.greenBg, color: theme.greenDark,
                   padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
                 }}
               >
@@ -256,7 +256,7 @@ export default function LandingPage() {
       {/* How It Works */}
       <section id="how-it-works" style={{
         padding: 'clamp(4rem, 8vw, 8rem) 1.5rem',
-        background: '#ffffff',
+        background: theme.cardBg,
       }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <motion.div
@@ -268,7 +268,7 @@ export default function LandingPage() {
           >
             <span style={{
               display: 'inline-block',
-              background: '#f0fdf4', color: '#16a34a',
+              background: theme.greenBg, color: theme.greenDark,
               padding: '6px 14px', borderRadius: 999,
               fontSize: 14, fontWeight: 600, marginBottom: 16,
             }}>
@@ -276,12 +276,12 @@ export default function LandingPage() {
             </span>
             <h2 style={{
               fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-              fontWeight: 800, color: '#111827',
+              fontWeight: 800, color: theme.text,
               letterSpacing: '-0.02em', lineHeight: 1.2,
             }}>
               How It Works
             </h2>
-            <p style={{ color: '#6b7280', fontSize: 17, marginTop: 12, maxWidth: 480, margin: '12px auto 0' }}>
+            <p style={{ color: theme.textMuted, fontSize: 17, marginTop: 12, maxWidth: 480, margin: '12px auto 0' }}>
               Three simple steps to understand exactly what you're eating.
             </p>
           </motion.div>
@@ -298,11 +298,11 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: i * 0.15 }}
-                whileHover={{ y: -6, boxShadow: '0 20px 40px rgba(0,0,0,0.10)' }}
+                whileHover={{ y: -6, boxShadow: theme.isDark ? '0 20px 40px rgba(0,0,0,0.4)' : '0 20px 40px rgba(0,0,0,0.10)' }}
                 style={{
-                  background: 'white', borderRadius: 20,
-                  padding: '2rem', border: '1px solid #f0fdf4',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+                  background: theme.cardBg, borderRadius: 20,
+                  padding: '2rem', border: `1px solid ${theme.cardBorder}`,
+                  boxShadow: theme.isDark ? '0 4px 20px rgba(0,0,0,0.25)' : '0 4px 20px rgba(0,0,0,0.06)',
                   transition: 'box-shadow 0.3s',
                   position: 'relative', overflow: 'hidden',
                 }}
@@ -313,25 +313,25 @@ export default function LandingPage() {
                 }} />
                 <div style={{
                   width: 56, height: 56, borderRadius: 16,
-                  background: step.bg, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
+                  background: theme.isDark ? step.darkBg : step.lightBg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                   marginBottom: 20,
                 }}>
                   <step.icon size={28} color={step.color} />
                 </div>
                 <div style={{
                   display: 'inline-block',
-                  background: '#f3f4f6', color: '#6b7280',
+                  background: theme.stepNumBg, color: theme.stepNumText,
                   padding: '2px 10px', borderRadius: 999,
                   fontSize: 12, fontWeight: 700,
                   letterSpacing: '0.05em', marginBottom: 10,
                 }}>
                   STEP {i + 1}
                 </div>
-                <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 10 }}>
+                <h3 style={{ fontSize: 20, fontWeight: 700, color: theme.text, marginBottom: 10 }}>
                   {step.title}
                 </h3>
-                <p style={{ color: '#6b7280', lineHeight: 1.7, fontSize: 15 }}>
+                <p style={{ color: theme.textMuted, lineHeight: 1.7, fontSize: 15 }}>
                   {step.desc}
                 </p>
               </motion.div>
@@ -343,7 +343,7 @@ export default function LandingPage() {
       {/* Features */}
       <section style={{
         padding: 'clamp(3rem, 6vw, 6rem) 1.5rem',
-        background: 'linear-gradient(160deg, #f0fdf4 0%, #dcfce7 100%)',
+        background: theme.featuresGradient,
       }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{
@@ -360,21 +360,22 @@ export default function LandingPage() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 style={{
                   display: 'flex', alignItems: 'flex-start', gap: 16,
-                  background: 'white', padding: '1.5rem', borderRadius: 16,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                  background: theme.cardBg, padding: '1.5rem', borderRadius: 16,
+                  boxShadow: theme.isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)',
+                  border: `1px solid ${theme.cardBorder}`,
                 }}
               >
                 <div style={{
                   width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                  background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: theme.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <f.icon size={22} color="#22c55e" />
+                  <f.icon size={22} color={theme.green} />
                 </div>
                 <div>
-                  <h4 style={{ fontWeight: 700, fontSize: 16, color: '#111827', marginBottom: 4 }}>
+                  <h4 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 4 }}>
                     {f.title}
                   </h4>
-                  <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
+                  <p style={{ fontSize: 14, color: theme.textMuted, lineHeight: 1.6 }}>
                     {f.desc}
                   </p>
                 </div>
@@ -388,7 +389,7 @@ export default function LandingPage() {
       <section style={{
         padding: 'clamp(4rem, 8vw, 8rem) 1.5rem',
         textAlign: 'center',
-        background: 'white',
+        background: theme.cardBg,
       }}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -428,12 +429,13 @@ export default function LandingPage() {
       {/* Footer */}
       <footer style={{
         padding: '2rem 1.5rem', textAlign: 'center',
-        borderTop: '1px solid #e5e7eb',
-        color: '#9ca3af', fontSize: 14,
+        borderTop: `1px solid ${theme.cardBorder}`,
+        color: theme.textSubtle, fontSize: 14,
+        background: theme.cardBg,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
-          <Leaf size={14} color="#22c55e" />
-          <span style={{ fontWeight: 600, color: '#374151' }}>Food Truth Teller</span>
+          <Leaf size={14} color={theme.green} />
+          <span style={{ fontWeight: 600, color: theme.textMuted }}>Food Truth Teller</span>
         </div>
         <p>Built with ❤️ for healthier food choices · Not a substitute for medical advice</p>
       </footer>

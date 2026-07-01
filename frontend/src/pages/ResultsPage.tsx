@@ -4,16 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ScanLine, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, Package, AlertTriangle } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { analyzeApi, productApi } from '../services/api'
+import { useTheme } from '../context/ThemeContext'
 import type { AnalysisResult, Product, Rating } from '../types'
 
-const RATING_CONFIG: Record<Rating, { color: string; bg: string; light: string; emoji: string; label: string }> = {
-  safe: { color: '#16a34a', bg: 'linear-gradient(135deg, #22c55e, #16a34a)', light: '#f0fdf4', emoji: '✅', label: 'SAFE' },
-  caution: { color: '#d97706', bg: 'linear-gradient(135deg, #f59e0b, #d97706)', light: '#fffbeb', emoji: '⚠️', label: 'CAUTION' },
-  avoid: { color: '#dc2626', bg: 'linear-gradient(135deg, #ef4444, #dc2626)', light: '#fee2e2', emoji: '🚫', label: 'AVOID' },
+const RATING_CONFIG: Record<Rating, { color: string; bg: string; light: string; dark: string; emoji: string; label: string }> = {
+  safe: { color: '#16a34a', bg: 'linear-gradient(135deg, #22c55e, #16a34a)', light: '#f0fdf4', dark: '#0d2318', emoji: '✅', label: 'SAFE' },
+  caution: { color: '#d97706', bg: 'linear-gradient(135deg, #f59e0b, #d97706)', light: '#fffbeb', dark: '#1f1a08', emoji: '⚠️', label: 'CAUTION' },
+  avoid: { color: '#dc2626', bg: 'linear-gradient(135deg, #ef4444, #dc2626)', light: '#fee2e2', dark: '#1f0a0a', emoji: '🚫', label: 'AVOID' },
 }
 
 function ProductBrowse() {
   const navigate = useNavigate()
+  const { theme } = useTheme()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -22,24 +24,24 @@ function ProductBrowse() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: theme.pageBg }}>
       <Navbar />
       <div style={{ paddingTop: 80, maxWidth: 700, margin: '0 auto', padding: '80px 1rem 2rem' }}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <button
             onClick={() => navigate('/scan')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', marginBottom: 20, padding: '4px 0' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textMuted, marginBottom: 20, padding: '4px 0' }}
           >
             <ArrowLeft size={18} /> Back to Scan
           </button>
 
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#111827', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: theme.text, marginBottom: 6 }}>
             Sample Products
           </h1>
-          <p style={{ color: '#6b7280', marginBottom: 24 }}>Click any product to get your personalized health analysis.</p>
+          <p style={{ color: theme.textMuted, marginBottom: 24 }}>Click any product to get your personalized health analysis.</p>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>Loading products...</div>
+            <div style={{ textAlign: 'center', padding: '3rem', color: theme.textSubtle }}>Loading products...</div>
           ) : (
             <div style={{ display: 'grid', gap: 12 }}>
               {products.map((p, i) => (
@@ -52,10 +54,11 @@ function ProductBrowse() {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate(`/results/${p.barcode}`)}
                   style={{
-                    padding: '16px', borderRadius: 14, border: '1px solid #e5e7eb',
-                    background: 'white', cursor: 'pointer', textAlign: 'left',
+                    padding: '16px', borderRadius: 14,
+                    border: `1px solid ${theme.cardBorder}`,
+                    background: theme.cardBg, cursor: 'pointer', textAlign: 'left',
                     display: 'flex', alignItems: 'center', gap: 14,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    boxShadow: theme.isDark ? '0 2px 8px rgba(0,0,0,0.25)' : '0 2px 8px rgba(0,0,0,0.04)',
                   }}
                 >
                   {p.image_url ? (
@@ -64,17 +67,17 @@ function ProductBrowse() {
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
                   ) : (
-                    <div style={{ width: 52, height: 52, borderRadius: 10, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Package size={24} color="#9ca3af" />
+                    <div style={{ width: 52, height: 52, borderRadius: 10, background: theme.pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Package size={24} color={theme.textSubtle} />
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: theme.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {p.product_name}
                     </div>
-                    <div style={{ fontSize: 13, color: '#6b7280' }}>{p.brand} · {p.category}</div>
+                    <div style={{ fontSize: 13, color: theme.textMuted }}>{p.brand} · {p.category}</div>
                   </div>
-                  <div style={{ fontSize: 13, color: '#22c55e', fontWeight: 600, flexShrink: 0 }}>Analyze →</div>
+                  <div style={{ fontSize: 13, color: theme.green, fontWeight: 600, flexShrink: 0 }}>Analyze →</div>
                 </motion.button>
               ))}
             </div>
@@ -88,6 +91,7 @@ function ProductBrowse() {
 export default function ResultsPage() {
   const { barcode } = useParams<{ barcode: string }>()
   const navigate = useNavigate()
+  const { theme } = useTheme()
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -113,25 +117,21 @@ export default function ResultsPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <div style={{ minHeight: '100vh', background: theme.pageBg }}>
         <Navbar />
         <div style={{ paddingTop: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            style={{ textAlign: 'center' }}
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center' }}>
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
               style={{
                 width: 60, height: 60, borderRadius: '50%', margin: '0 auto 16px',
-                border: '4px solid #f0fdf4',
-                borderTop: '4px solid #22c55e',
+                border: `4px solid ${theme.cardBorder}`,
+                borderTop: `4px solid ${theme.green}`,
               }}
             />
-            <p style={{ color: '#6b7280', fontSize: 16, fontWeight: 500 }}>Analyzing product...</p>
-            <p style={{ color: '#9ca3af', fontSize: 14, marginTop: 4 }}>Checking against your health profile</p>
+            <p style={{ color: theme.textMuted, fontSize: 16, fontWeight: 500 }}>Analyzing product...</p>
+            <p style={{ color: theme.textSubtle, fontSize: 14, marginTop: 4 }}>Checking against your health profile</p>
           </motion.div>
         </div>
       </div>
@@ -140,15 +140,15 @@ export default function ResultsPage() {
 
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <div style={{ minHeight: '100vh', background: theme.pageBg }}>
         <Navbar />
         <div style={{ paddingTop: 80, maxWidth: 500, margin: '0 auto', padding: '80px 1rem 2rem', textAlign: 'center' }}>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
             <AlertTriangle size={56} color="#f59e0b" style={{ marginBottom: 16 }} />
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginBottom: 8 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: theme.text, marginBottom: 8 }}>
               Product Not Found
             </h2>
-            <p style={{ color: '#6b7280', marginBottom: 24 }}>{error}</p>
+            <p style={{ color: theme.textMuted, marginBottom: 24 }}>{error}</p>
             <button
               onClick={() => navigate('/scan')}
               style={{
@@ -170,7 +170,7 @@ export default function ResultsPage() {
   const cfg = RATING_CONFIG[rating]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: theme.pageBg }}>
       <Navbar />
       <div style={{ paddingTop: 80, maxWidth: 640, margin: '0 auto', padding: '80px 1rem 3rem' }}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -180,7 +180,7 @@ export default function ResultsPage() {
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 6,
-              color: '#6b7280', marginBottom: 20, padding: '4px 0', fontSize: 15,
+              color: theme.textMuted, marginBottom: 20, padding: '4px 0', fontSize: 15,
             }}
           >
             <ArrowLeft size={18} /> Scan Another
@@ -188,8 +188,9 @@ export default function ResultsPage() {
 
           {/* Product Header */}
           <div style={{
-            background: 'white', borderRadius: 20, padding: '1.5rem',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.07)', border: '1px solid #f0fdf4',
+            background: theme.cardBg, borderRadius: 20, padding: '1.5rem',
+            boxShadow: theme.isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.07)',
+            border: `1px solid ${theme.cardBorder}`,
             marginBottom: 16, display: 'flex', gap: 16, alignItems: 'flex-start',
           }}>
             {product.image_url ? (
@@ -198,25 +199,25 @@ export default function ResultsPage() {
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             ) : (
-              <div style={{ width: 80, height: 80, borderRadius: 14, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Package size={36} color="#9ca3af" />
+              <div style={{ width: 80, height: 80, borderRadius: 14, background: theme.pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Package size={36} color={theme.textSubtle} />
               </div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <h1 style={{ fontSize: 19, fontWeight: 800, color: '#111827', lineHeight: 1.3, marginBottom: 4 }}>
+              <h1 style={{ fontSize: 19, fontWeight: 800, color: theme.text, lineHeight: 1.3, marginBottom: 4 }}>
                 {product.product_name}
               </h1>
-              <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 6 }}>
+              <p style={{ color: theme.textMuted, fontSize: 14, marginBottom: 6 }}>
                 {product.brand} · {product.category}
               </p>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {product.per_100g_sugar != null && (
-                  <span style={{ background: '#f3f4f6', color: '#6b7280', padding: '2px 8px', borderRadius: 999, fontSize: 12 }}>
+                  <span style={{ background: theme.pageBg, color: theme.textMuted, padding: '2px 8px', borderRadius: 999, fontSize: 12, border: `1px solid ${theme.cardBorder}` }}>
                     Sugar: {product.per_100g_sugar}g/100g
                   </span>
                 )}
                 {product.per_100g_sodium != null && (
-                  <span style={{ background: '#f3f4f6', color: '#6b7280', padding: '2px 8px', borderRadius: 999, fontSize: 12 }}>
+                  <span style={{ background: theme.pageBg, color: theme.textMuted, padding: '2px 8px', borderRadius: 999, fontSize: 12, border: `1px solid ${theme.cardBorder}` }}>
                     Sodium: {product.per_100g_sodium}mg/100g
                   </span>
                 )}
@@ -289,11 +290,12 @@ export default function ResultsPage() {
 
           {/* Reasons */}
           <div style={{
-            background: 'white', borderRadius: 20, padding: '1.5rem',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.07)', border: '1px solid #e5e7eb',
+            background: theme.cardBg, borderRadius: 20, padding: '1.5rem',
+            boxShadow: theme.isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.07)',
+            border: `1px solid ${theme.cardBorder}`,
             marginBottom: 16,
           }}>
-            <h3 style={{ fontWeight: 700, fontSize: 17, color: '#111827', marginBottom: 14 }}>
+            <h3 style={{ fontWeight: 700, fontSize: 17, color: theme.text, marginBottom: 14 }}>
               Why this rating?
             </h3>
             <div>
@@ -306,13 +308,13 @@ export default function ResultsPage() {
                   style={{
                     display: 'flex', alignItems: 'flex-start', gap: 10,
                     padding: '10px 0',
-                    borderBottom: i < reasons.length - 1 ? '1px solid #f3f4f6' : 'none',
+                    borderBottom: i < reasons.length - 1 ? `1px solid ${theme.cardBorder}` : 'none',
                   }}
                 >
                   <span style={{ fontSize: 16, lineHeight: 1.5, flexShrink: 0 }}>
                     {reason.startsWith('✅') ? '' : reason.startsWith('🚫') ? '' : reason.startsWith('⚠️') ? '' : '•'}
                   </span>
-                  <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{reason}</p>
+                  <p style={{ fontSize: 14, color: theme.text, lineHeight: 1.6 }}>{reason}</p>
                 </motion.div>
               ))}
             </div>
@@ -322,8 +324,9 @@ export default function ResultsPage() {
           {product.ingredients && (
             <motion.div
               style={{
-                background: 'white', borderRadius: 20,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.07)', border: '1px solid #e5e7eb',
+                background: theme.cardBg, borderRadius: 20,
+                boxShadow: theme.isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.07)',
+                border: `1px solid ${theme.cardBorder}`,
                 marginBottom: 16, overflow: 'hidden',
               }}
             >
@@ -334,10 +337,10 @@ export default function ResultsPage() {
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>
+                <span style={{ fontWeight: 700, fontSize: 16, color: theme.text }}>
                   Full Ingredient List
                 </span>
-                {showIngredients ? <ChevronUp size={20} color="#6b7280" /> : <ChevronDown size={20} color="#6b7280" />}
+                {showIngredients ? <ChevronUp size={20} color={theme.textMuted} /> : <ChevronDown size={20} color={theme.textMuted} />}
               </button>
               <AnimatePresence>
                 {showIngredients && (
@@ -349,7 +352,7 @@ export default function ResultsPage() {
                     style={{ overflow: 'hidden' }}
                   >
                     <div style={{ padding: '0 1.5rem 1.5rem' }}>
-                      <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.8 }}>
+                      <p style={{ fontSize: 14, color: theme.textMuted, lineHeight: 1.8 }}>
                         {product.ingredients}
                       </p>
                     </div>
@@ -366,8 +369,10 @@ export default function ResultsPage() {
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate('/scan')}
               style={{
-                flex: 1, padding: '14px', borderRadius: 12, border: '2px solid #e5e7eb',
-                background: 'white', color: '#374151', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                flex: 1, padding: '14px', borderRadius: 12,
+                border: `2px solid ${theme.cardBorder}`,
+                background: theme.cardBg, color: theme.text,
+                fontWeight: 700, fontSize: 15, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >

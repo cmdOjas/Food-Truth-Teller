@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Leaf, ChevronRight, ChevronLeft, CheckCircle, User, Heart, AlertTriangle, Utensils } from 'lucide-react'
 import { profileApi } from '../services/api'
 import { DISEASES_OPTIONS, ALLERGIES_OPTIONS, DIET_OPTIONS } from '../types'
+import { useTheme } from '../context/ThemeContext'
 
 const STEPS = [
   { label: 'Basic Info', icon: User },
@@ -22,24 +23,17 @@ interface FormData {
   diet_type: string
 }
 
-const inputStyle = {
-  width: '100%', padding: '12px 16px', borderRadius: 10,
-  border: '2px solid #e5e7eb', fontSize: 16, fontFamily: 'inherit',
-  outline: 'none', transition: 'border-color 0.2s',
-  background: 'white',
-}
-
 function CheckItem({
-  label, checked, onChange,
-}: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  label, checked, onChange, theme,
+}: { label: string; checked: boolean; onChange: (v: boolean) => void; theme: ReturnType<typeof useTheme>['theme'] }) {
   return (
     <motion.label
       whileTap={{ scale: 0.97 }}
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-        border: `2px solid ${checked ? '#22c55e' : '#e5e7eb'}`,
-        background: checked ? '#f0fdf4' : 'white',
+        border: `2px solid ${checked ? theme.green : theme.inputBorder}`,
+        background: checked ? theme.greenBg : theme.cardBg,
         transition: 'all 0.2s', marginBottom: 8,
       }}
     >
@@ -50,8 +44,8 @@ function CheckItem({
       />
       <div style={{
         width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-        border: `2px solid ${checked ? '#22c55e' : '#d1d5db'}`,
-        background: checked ? '#22c55e' : 'white',
+        border: `2px solid ${checked ? theme.green : theme.textSubtle}`,
+        background: checked ? theme.green : theme.inputBg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'all 0.2s',
       }}>
@@ -61,13 +55,14 @@ function CheckItem({
           </motion.div>
         )}
       </div>
-      <span style={{ fontWeight: 500, fontSize: 15, color: '#374151' }}>{label}</span>
+      <span style={{ fontWeight: 500, fontSize: 15, color: theme.text }}>{label}</span>
     </motion.label>
   )
 }
 
 export default function ProfileSetupPage() {
   const navigate = useNavigate()
+  const { theme } = useTheme()
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -121,9 +116,19 @@ export default function ProfileSetupPage() {
     }
   }
 
+  const inputStyle = {
+    width: '100%', padding: '12px 16px', borderRadius: 10,
+    border: `2px solid ${theme.inputBorder}`, fontSize: 16, fontFamily: 'inherit',
+    outline: 'none', transition: 'border-color 0.2s',
+    background: theme.inputBg, color: theme.text,
+  }
+
   return (
     <div style={{
-      minHeight: '100vh', background: 'linear-gradient(160deg, #f0fdf4 0%, #ffffff 100%)',
+      minHeight: '100vh',
+      background: theme.isDark
+        ? theme.pageBg
+        : 'linear-gradient(160deg, #f0fdf4 0%, #ffffff 100%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '2rem 1rem',
     }}>
@@ -142,10 +147,10 @@ export default function ProfileSetupPage() {
           }}>
             <Leaf size={24} color="white" />
           </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#111827' }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: theme.text }}>
             Set Up Your Profile
           </h1>
-          <p style={{ color: '#6b7280', fontSize: 15, marginTop: 4 }}>
+          <p style={{ color: theme.textMuted, fontSize: 15, marginTop: 4 }}>
             So we can personalize your food analysis
           </p>
         </motion.div>
@@ -156,14 +161,14 @@ export default function ProfileSetupPage() {
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <motion.div
                 animate={{
-                  background: i === step ? '#22c55e' : i < step ? '#86efac' : '#e5e7eb',
+                  background: i === step ? '#22c55e' : i < step ? '#86efac' : theme.stepNumBg,
                   scale: i === step ? 1.1 : 1,
                 }}
                 style={{
                   width: 32, height: 32, borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 13, fontWeight: 700,
-                  color: i <= step ? 'white' : '#9ca3af',
+                  color: i <= step ? 'white' : theme.stepNumText,
                 }}
               >
                 {i < step ? '✓' : i + 1}
@@ -171,7 +176,7 @@ export default function ProfileSetupPage() {
               {i < STEPS.length - 1 && (
                 <div style={{
                   width: 24, height: 2, borderRadius: 1,
-                  background: i < step ? '#86efac' : '#e5e7eb',
+                  background: i < step ? '#86efac' : theme.cardBorder,
                   transition: 'background 0.3s',
                 }} />
               )}
@@ -182,9 +187,9 @@ export default function ProfileSetupPage() {
         {/* Card */}
         <motion.div
           style={{
-            background: 'white', borderRadius: 24, padding: '2rem',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-            border: '1px solid #f0fdf4',
+            background: theme.cardBg, borderRadius: 24, padding: '2rem',
+            boxShadow: theme.isDark ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.08)',
+            border: `1px solid ${theme.cardBorder}`,
           }}
         >
           <AnimatePresence mode="wait">
@@ -198,11 +203,11 @@ export default function ProfileSetupPage() {
               {/* Step 0: Basic Info */}
               {step === 0 && (
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 20 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.text, marginBottom: 20 }}>
                     👋 Tell us about yourself
                   </h2>
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: theme.textMuted, marginBottom: 6 }}>
                       Your Name *
                     </label>
                     <input
@@ -215,7 +220,7 @@ export default function ProfileSetupPage() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                      <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: theme.textMuted, marginBottom: 6 }}>
                         Age
                       </label>
                       <input
@@ -227,7 +232,7 @@ export default function ProfileSetupPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                      <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: theme.textMuted, marginBottom: 6 }}>
                         Weight (kg)
                       </label>
                       <input
@@ -240,7 +245,7 @@ export default function ProfileSetupPage() {
                     </div>
                   </div>
                   <div style={{ marginTop: 16 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 8 }}>
+                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: theme.textMuted, marginBottom: 8 }}>
                       Gender
                     </label>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -251,9 +256,9 @@ export default function ProfileSetupPage() {
                           onClick={() => update('gender', g.toLowerCase())}
                           style={{
                             flex: 1, padding: '10px', borderRadius: 10, cursor: 'pointer',
-                            border: `2px solid ${form.gender === g.toLowerCase() ? '#22c55e' : '#e5e7eb'}`,
-                            background: form.gender === g.toLowerCase() ? '#f0fdf4' : 'white',
-                            color: form.gender === g.toLowerCase() ? '#16a34a' : '#374151',
+                            border: `2px solid ${form.gender === g.toLowerCase() ? theme.green : theme.inputBorder}`,
+                            background: form.gender === g.toLowerCase() ? theme.greenBg : theme.inputBg,
+                            color: form.gender === g.toLowerCase() ? theme.greenDark : theme.text,
                             fontWeight: 600, fontSize: 14, transition: 'all 0.2s',
                           }}
                         >
@@ -268,10 +273,10 @@ export default function ProfileSetupPage() {
               {/* Step 1: Health Conditions */}
               {step === 1 && (
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 8 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.text, marginBottom: 8 }}>
                     🏥 Health Conditions
                   </h2>
-                  <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 20 }}>
+                  <p style={{ color: theme.textMuted, fontSize: 14, marginBottom: 20 }}>
                     Select any conditions you have, or skip if none apply.
                   </p>
                   {DISEASES_OPTIONS.map(opt => (
@@ -280,10 +285,11 @@ export default function ProfileSetupPage() {
                       label={opt.label}
                       checked={form.diseases.includes(opt.value)}
                       onChange={checked => toggleList('diseases', opt.value)}
+                      theme={theme}
                     />
                   ))}
                   {form.diseases.length === 0 && (
-                    <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 8, textAlign: 'center' }}>
+                    <p style={{ color: theme.textSubtle, fontSize: 13, marginTop: 8, textAlign: 'center' }}>
                       No conditions selected (products will show general safety ratings)
                     </p>
                   )}
@@ -293,10 +299,10 @@ export default function ProfileSetupPage() {
               {/* Step 2: Allergies */}
               {step === 2 && (
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 8 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.text, marginBottom: 8 }}>
                     ⚠️ Food Allergies
                   </h2>
-                  <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 20 }}>
+                  <p style={{ color: theme.textMuted, fontSize: 14, marginBottom: 20 }}>
                     We'll flag products containing your allergens immediately.
                   </p>
                   {ALLERGIES_OPTIONS.map(opt => (
@@ -305,6 +311,7 @@ export default function ProfileSetupPage() {
                       label={opt.label}
                       checked={form.allergies.includes(opt.value)}
                       onChange={() => toggleList('allergies', opt.value)}
+                      theme={theme}
                     />
                   ))}
                 </div>
@@ -313,10 +320,10 @@ export default function ProfileSetupPage() {
               {/* Step 3: Diet Type */}
               {step === 3 && (
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 8 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.text, marginBottom: 8 }}>
                     🥗 Dietary Preference
                   </h2>
-                  <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 20 }}>
+                  <p style={{ color: theme.textMuted, fontSize: 14, marginBottom: 20 }}>
                     We'll flag products that don't match your diet.
                   </p>
                   {DIET_OPTIONS.map(opt => (
@@ -327,9 +334,9 @@ export default function ProfileSetupPage() {
                       style={{
                         width: '100%', padding: '16px', borderRadius: 12,
                         marginBottom: 10, cursor: 'pointer',
-                        border: `2px solid ${form.diet_type === opt.value ? '#22c55e' : '#e5e7eb'}`,
-                        background: form.diet_type === opt.value ? '#f0fdf4' : 'white',
-                        color: form.diet_type === opt.value ? '#16a34a' : '#374151',
+                        border: `2px solid ${form.diet_type === opt.value ? theme.green : theme.inputBorder}`,
+                        background: form.diet_type === opt.value ? theme.greenBg : theme.inputBg,
+                        color: form.diet_type === opt.value ? theme.greenDark : theme.text,
                         fontWeight: 600, fontSize: 16, textAlign: 'left',
                         transition: 'all 0.2s',
                       }}
@@ -345,7 +352,8 @@ export default function ProfileSetupPage() {
 
           {error && (
             <div style={{
-              background: '#fee2e2', color: '#dc2626', padding: '10px 14px',
+              background: theme.isDark ? '#1f0a0a' : '#fee2e2',
+              color: '#dc2626', padding: '10px 14px',
               borderRadius: 8, fontSize: 14, marginTop: 16,
             }}>
               {error}
@@ -361,8 +369,9 @@ export default function ProfileSetupPage() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '12px 20px', borderRadius: 10,
-                  border: '2px solid #e5e7eb', background: 'white',
-                  color: '#374151', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                  border: `2px solid ${theme.inputBorder}`,
+                  background: theme.btnSecBg,
+                  color: theme.btnSecText, fontWeight: 600, fontSize: 15, cursor: 'pointer',
                 }}
               >
                 <ChevronLeft size={18} /> Back
@@ -376,8 +385,8 @@ export default function ProfileSetupPage() {
               style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 padding: '14px', borderRadius: 10, border: 'none',
-                background: canNext() ? 'linear-gradient(135deg, #22c55e, #16a34a)' : '#e5e7eb',
-                color: canNext() ? 'white' : '#9ca3af',
+                background: canNext() ? 'linear-gradient(135deg, #22c55e, #16a34a)' : theme.stepNumBg,
+                color: canNext() ? 'white' : theme.textSubtle,
                 fontWeight: 700, fontSize: 16, cursor: canNext() ? 'pointer' : 'not-allowed',
                 boxShadow: canNext() ? '0 4px 15px rgba(34,197,94,0.3)' : 'none',
               }}

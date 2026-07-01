@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Bot, User, Leaf } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { chatApi } from '../services/api'
+import { useTheme } from '../context/ThemeContext'
 import type { ChatMessage } from '../types'
 
 const SUGGESTED = [
@@ -15,7 +16,7 @@ const SUGGESTED = [
   'What hidden gluten sources should I know?',
 ]
 
-function MessageBubble({ msg }: { msg: ChatMessage }) {
+function MessageBubble({ msg, theme }: { msg: ChatMessage; theme: ReturnType<typeof useTheme>['theme'] }) {
   const isUser = msg.role === 'user'
   return (
     <motion.div
@@ -31,7 +32,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
       {/* Avatar */}
       <div style={{
         width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-        background: isUser ? '#22c55e' : 'linear-gradient(135deg, #166534, #16a34a)',
+        background: isUser ? theme.green : 'linear-gradient(135deg, #166534, #16a34a)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {isUser ? <User size={16} color="white" /> : <Leaf size={16} color="white" />}
@@ -40,15 +41,16 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
       {/* Bubble */}
       <div style={{
         maxWidth: '75%',
-        background: isUser ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'white',
-        color: isUser ? 'white' : '#111827',
+        background: isUser
+          ? 'linear-gradient(135deg, #22c55e, #16a34a)'
+          : theme.cardBg,
+        color: isUser ? 'white' : theme.text,
         padding: '12px 16px', borderRadius: isUser ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-        border: isUser ? 'none' : '1px solid #e5e7eb',
+        boxShadow: theme.isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.08)',
+        border: isUser ? 'none' : `1px solid ${theme.cardBorder}`,
         fontSize: 14, lineHeight: 1.7,
         whiteSpace: 'pre-line',
       }}>
-        {/* Render bold markdown */}
         {msg.content.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
           part.startsWith('**') && part.endsWith('**') ? (
             <strong key={i}>{part.slice(2, -2)}</strong>
@@ -61,7 +63,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   )
 }
 
-function TypingIndicator() {
+function TypingIndicator({ theme }: { theme: ReturnType<typeof useTheme>['theme'] }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -77,15 +79,16 @@ function TypingIndicator() {
         <Leaf size={16} color="white" />
       </div>
       <div style={{
-        background: 'white', padding: '12px 16px', borderRadius: '4px 18px 18px 18px',
-        border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        background: theme.cardBg, padding: '12px 16px', borderRadius: '4px 18px 18px 18px',
+        border: `1px solid ${theme.cardBorder}`,
+        boxShadow: theme.isDark ? '0 2px 8px rgba(0,0,0,0.25)' : '0 2px 8px rgba(0,0,0,0.06)',
         display: 'flex', gap: 4, alignItems: 'center',
       }}>
         {[0, 1, 2].map(i => (
           <motion.div key={i}
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
-            style={{ width: 7, height: 7, borderRadius: '50%', background: '#9ca3af' }}
+            style={{ width: 7, height: 7, borderRadius: '50%', background: theme.textSubtle }}
           />
         ))}
       </div>
@@ -95,6 +98,7 @@ function TypingIndicator() {
 
 export default function ChatPage() {
   const location = useLocation()
+  const { theme } = useTheme()
   const productBarcode = new URLSearchParams(location.search).get('barcode') || undefined
   const userId = parseInt(localStorage.getItem('user_id') || '0')
   const userName = localStorage.getItem('user_name') || 'there'
@@ -145,7 +149,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: theme.pageBg, display: 'flex', flexDirection: 'column' }}>
       <Navbar />
 
       {/* Chat container */}
@@ -156,8 +160,8 @@ export default function ChatPage() {
       }}>
         {/* Chat header */}
         <div style={{
-          padding: '1rem 1.5rem', borderBottom: '1px solid #e5e7eb',
-          background: 'white', display: 'flex', alignItems: 'center', gap: 12,
+          padding: '1rem 1.5rem', borderBottom: `1px solid ${theme.cardBorder}`,
+          background: theme.cardBg, display: 'flex', alignItems: 'center', gap: 12,
         }}>
           <div style={{
             width: 42, height: 42, borderRadius: 12,
@@ -167,16 +171,17 @@ export default function ChatPage() {
             <Bot size={22} color="white" />
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>Food Truth AI</div>
-            <div style={{ fontSize: 13, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e' }} />
+            <div style={{ fontWeight: 700, fontSize: 16, color: theme.text }}>Food Truth AI</div>
+            <div style={{ fontSize: 13, color: theme.green, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: theme.green }} />
               Online · Personalized to your profile
             </div>
           </div>
           {productBarcode && (
             <div style={{
-              marginLeft: 'auto', background: '#f0fdf4', color: '#16a34a',
+              marginLeft: 'auto', background: theme.greenBg, color: theme.greenDark,
               padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+              border: `1px solid ${theme.isDark ? '#1a4a28' : 'transparent'}`,
             }}>
               Product: {productBarcode}
             </div>
@@ -189,8 +194,8 @@ export default function ChatPage() {
           display: 'flex', flexDirection: 'column',
         }}>
           <AnimatePresence>
-            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
-            {loading && <TypingIndicator />}
+            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} theme={theme} />)}
+            {loading && <TypingIndicator theme={theme} />}
           </AnimatePresence>
           <div ref={bottomRef} />
         </div>
@@ -209,8 +214,9 @@ export default function ChatPage() {
                 onClick={() => sendMessage(s)}
                 style={{
                   padding: '7px 12px', borderRadius: 999,
-                  border: '1px solid #e5e7eb', background: 'white',
-                  fontSize: 13, color: '#374151', cursor: 'pointer', fontWeight: 500,
+                  border: `1px solid ${theme.cardBorder}`,
+                  background: theme.cardBg,
+                  fontSize: 13, color: theme.text, cursor: 'pointer', fontWeight: 500,
                   transition: 'all 0.15s',
                 }}
               >
@@ -222,8 +228,8 @@ export default function ChatPage() {
 
         {/* Input bar */}
         <div style={{
-          padding: '1rem 1.5rem', borderTop: '1px solid #e5e7eb',
-          background: 'white',
+          padding: '1rem 1.5rem', borderTop: `1px solid ${theme.cardBorder}`,
+          background: theme.cardBg,
           display: 'flex', gap: 10, alignItems: 'flex-end',
         }}>
           <input
@@ -234,9 +240,9 @@ export default function ChatPage() {
             placeholder="Ask about your food or health..."
             style={{
               flex: 1, padding: '12px 16px', borderRadius: 12,
-              border: '2px solid #e5e7eb', fontSize: 15, fontFamily: 'inherit',
-              outline: 'none', background: 'white', resize: 'none',
-              transition: 'border-color 0.2s',
+              border: `2px solid ${theme.inputBorder}`, fontSize: 15, fontFamily: 'inherit',
+              outline: 'none', background: theme.inputBg, color: theme.text,
+              resize: 'none', transition: 'border-color 0.2s',
             }}
           />
           <motion.button
@@ -246,8 +252,8 @@ export default function ChatPage() {
             disabled={!input.trim() || loading}
             style={{
               width: 46, height: 46, borderRadius: 12, border: 'none', flexShrink: 0,
-              background: input.trim() && !loading ? 'linear-gradient(135deg, #22c55e, #16a34a)' : '#e5e7eb',
-              color: input.trim() && !loading ? 'white' : '#9ca3af',
+              background: input.trim() && !loading ? 'linear-gradient(135deg, #22c55e, #16a34a)' : theme.stepNumBg,
+              color: input.trim() && !loading ? 'white' : theme.textSubtle,
               cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s',

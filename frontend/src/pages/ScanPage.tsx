@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScanLine, Keyboard, X, Camera, Package, ChevronRight } from 'lucide-react'
-import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import Navbar from '../components/Navbar'
-import { productApi } from '../services/api'
+import { useTheme } from '../context/ThemeContext'
 
 const RECENT_KEY = 'recent_scans'
 
@@ -24,13 +24,18 @@ function addRecentScan(barcode: string) {
 
 export default function ScanPage() {
   const navigate = useNavigate()
+  const { theme } = useTheme()
   const [mode, setMode] = useState<'idle' | 'camera' | 'manual'>('idle')
   const [manual, setManual] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [recentScans, setRecentScans] = useState<string[]>(getRecentScans())
   const [loadingBarcode, setLoadingBarcode] = useState('')
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null)
+  const [torchOn, setTorchOn] = useState(false)
+  const [torchSupported, setTorchSupported] = useState<boolean | null>(null)
+  const [torchMsg, setTorchMsg] = useState('')
+  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const trackRef = useRef<MediaStreamTrack | null>(null)
   const userName = localStorage.getItem('user_name') || 'there'
 
   const handleScan = async (barcode: string) => {
@@ -39,48 +44,89 @@ export default function ScanPage() {
     setLoadingBarcode(barcode)
     addRecentScan(barcode)
     setRecentScans(getRecentScans())
-
-    // Brief success animation before navigating
-    setTimeout(() => {
-      navigate(`/results/${barcode}`)
-    }, 600)
+    setTimeout(() => navigate(`/results/${barcode}`), 600)
   }
 
   useEffect(() => {
     if (mode !== 'camera') return
 
-    const scanner = new Html5QrcodeScanner(
-      'qr-reader',
-      {
-        fps: 10,
-        qrbox: { width: 260, height: 120 },
-        rememberLastUsedCamera: true,
-        supportedScanTypes: [],
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.CODE_128,
-        ],
-      },
-      false,
-    )
-
-    scanner.render(
-      (decodedText) => {
-        scanner.clear().catch(() => {})
-        handleScan(decodedText.trim())
-      },
-      () => {},
-    )
-
+    const scanner = new Html5Qrcode('qr-reader')
     scannerRef.current = scanner
 
+    const scanConfig = {
+      fps: 10,
+      qrbox: { width: 260, height: 120 },
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_128,
+      ],
+    }
+
+    const onSuccess = (text: string) => {
+      scanner.stop().catch(() => {})
+      handleScan(text.trim())
+    }
+
+    const initCamera = async () => {
+      try {
+        await scanner.start(
+          { facingMode: { exact: 'environment' } },
+          scanConfig,
+          onSuccess,
+          () => {}
+        )
+      } catch {
+        try {
+          await scanner.start(
+            { facingMode: 'environment' },
+            scanConfig,
+            onSuccess,
+            () => {}
+          )
+        } catch {
+          setError('Could not access camera. Please allow camera permissions and try again.')
+          return
+        }
+      }
+
+      // Detect torch support after camera starts
+      setTimeout(() => {
+        const videoEl = document.querySelector('#qr-reader video') as HTMLVideoElement | null
+        if (videoEl?.srcObject) {
+          const track = (videoEl.srcObject as MediaStream).getVideoTracks()[0]
+          trackRef.current = track
+          const caps = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean }
+          setTorchSupported(!!caps?.torch)
+        }
+      }, 800)
+    }
+
+    initCamera()
+
     return () => {
-      scannerRef.current?.clear().catch(() => {})
+      scannerRef.current?.stop().catch(() => {})
+      setTorchOn(false)
+      setTorchSupported(null)
+      setTorchMsg('')
+      trackRef.current = null
     }
   }, [mode])
+
+  const toggleTorch = async () => {
+    if (!trackRef.current) return
+    const next = !torchOn
+    try {
+      await trackRef.current.applyConstraints({ advanced: [{ torch: next } as MediaTrackConstraintSet] })
+      setTorchOn(next)
+      setTorchMsg('')
+    } catch {
+      setTorchSupported(false)
+      setTorchMsg('Flash not supported on this device')
+    }
+  }
 
   const handleManualSubmit = () => {
     const barcode = manual.trim()
@@ -96,7 +142,7 @@ export default function ScanPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: theme.pageBg }}>
       <Navbar />
       <div style={{ paddingTop: 80, maxWidth: 600, margin: '0 auto', padding: '80px 1rem 2rem' }}>
 
@@ -106,10 +152,10 @@ export default function ScanPage() {
           animate={{ opacity: 1, y: 0 }}
           style={{ textAlign: 'center', marginBottom: 32 }}
         >
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', marginBottom: 8 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: theme.text, marginBottom: 8 }}>
             Hi {userName}! 👋
           </h1>
-          <p style={{ color: '#6b7280', fontSize: 16 }}>
+          <p style={{ color: theme.textMuted, fontSize: 16 }}>
             Scan a product barcode to check if it's right for you.
           </p>
         </motion.div>
@@ -125,15 +171,16 @@ export default function ScanPage() {
               style={{
                 position: 'fixed', inset: 0, zIndex: 999,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
               }}
             >
               <motion.div
                 animate={{ scale: [1, 1.15, 1] }}
                 transition={{ duration: 0.5, times: [0, 0.5, 1] }}
                 style={{
-                  background: 'white', borderRadius: 24, padding: '2.5rem 3rem',
-                  textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.2)',
+                  background: theme.cardBg, borderRadius: 24, padding: '2.5rem 3rem',
+                  textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+                  border: `1px solid ${theme.cardBorder}`,
                 }}
               >
                 <motion.div
@@ -143,8 +190,8 @@ export default function ScanPage() {
                 >
                   ✅
                 </motion.div>
-                <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>Barcode Detected!</h3>
-                <p style={{ color: '#6b7280', fontSize: 15, marginTop: 4 }}>
+                <h3 style={{ fontSize: 20, fontWeight: 700, color: theme.text }}>Barcode Detected!</h3>
+                <p style={{ color: theme.textMuted, fontSize: 15, marginTop: 4 }}>
                   {loadingBarcode}
                 </p>
               </motion.div>
@@ -152,7 +199,7 @@ export default function ScanPage() {
           )}
         </AnimatePresence>
 
-        {/* Action cards */}
+        {/* Action cards — idle mode */}
         {mode === 'idle' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 }}>
@@ -161,15 +208,18 @@ export default function ScanPage() {
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setMode('camera')}
                 style={{
-                  padding: '2rem 1rem', borderRadius: 20, border: '2px solid #22c55e',
-                  background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+                  padding: '2rem 1rem', borderRadius: 20,
+                  border: `2px solid ${theme.green}`,
+                  background: theme.isDark
+                    ? 'linear-gradient(135deg, #0d2318, #122d1c)'
+                    : 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
                   cursor: 'pointer', textAlign: 'center',
                   boxShadow: '0 4px 20px rgba(34,197,94,0.15)',
                 }}
               >
-                <Camera size={36} color="#22c55e" style={{ margin: '0 auto 12px' }} />
-                <div style={{ fontWeight: 700, fontSize: 16, color: '#166534' }}>Scan Barcode</div>
-                <div style={{ fontSize: 13, color: '#16a34a', marginTop: 4 }}>Use Camera</div>
+                <Camera size={36} color={theme.green} style={{ margin: '0 auto 12px' }} />
+                <div style={{ fontWeight: 700, fontSize: 16, color: theme.isDark ? theme.green : '#166534' }}>Scan Barcode</div>
+                <div style={{ fontSize: 13, color: theme.isDark ? theme.greenDark : '#16a34a', marginTop: 4 }}>Use Camera</div>
               </motion.button>
 
               <motion.button
@@ -177,14 +227,15 @@ export default function ScanPage() {
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setMode('manual')}
                 style={{
-                  padding: '2rem 1rem', borderRadius: 20, border: '2px solid #e5e7eb',
-                  background: 'white', cursor: 'pointer', textAlign: 'center',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+                  padding: '2rem 1rem', borderRadius: 20,
+                  border: `2px solid ${theme.cardBorder}`,
+                  background: theme.cardBg, cursor: 'pointer', textAlign: 'center',
+                  boxShadow: theme.isDark ? '0 4px 20px rgba(0,0,0,0.25)' : '0 4px 20px rgba(0,0,0,0.06)',
                 }}
               >
-                <Keyboard size={36} color="#6b7280" style={{ margin: '0 auto 12px' }} />
-                <div style={{ fontWeight: 700, fontSize: 16, color: '#374151' }}>Enter Code</div>
-                <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>Type Manually</div>
+                <Keyboard size={36} color={theme.textMuted} style={{ margin: '0 auto 12px' }} />
+                <div style={{ fontWeight: 700, fontSize: 16, color: theme.text }}>Enter Code</div>
+                <div style={{ fontSize: 13, color: theme.textSubtle, marginTop: 4 }}>Type Manually</div>
               </motion.button>
             </div>
 
@@ -194,10 +245,11 @@ export default function ScanPage() {
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate('/results/browse')}
               style={{
-                width: '100%', padding: '16px', borderRadius: 14, border: '2px dashed #d1d5db',
-                background: 'white', cursor: 'pointer',
+                width: '100%', padding: '16px', borderRadius: 14,
+                border: `2px dashed ${theme.cardBorder}`,
+                background: theme.cardBg, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                color: '#6b7280', fontWeight: 600, fontSize: 15, marginBottom: 32,
+                color: theme.textMuted, fontWeight: 600, fontSize: 15, marginBottom: 32,
               }}
             >
               <Package size={20} />
@@ -207,7 +259,7 @@ export default function ScanPage() {
             {/* Recent scans */}
             {recentScans.length > 0 && (
               <div>
-                <h3 style={{ fontWeight: 700, fontSize: 16, color: '#374151', marginBottom: 12 }}>
+                <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 12 }}>
                   Recent Scans
                 </h3>
                 {recentScans.map((barcode, i) => (
@@ -220,16 +272,16 @@ export default function ScanPage() {
                     onClick={() => handleRecentScan(barcode)}
                     style={{
                       width: '100%', padding: '14px 16px', borderRadius: 12,
-                      border: '1px solid #e5e7eb', background: 'white',
+                      border: `1px solid ${theme.cardBorder}`, background: theme.cardBg,
                       cursor: 'pointer', textAlign: 'left', marginBottom: 8,
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <ScanLine size={16} color="#22c55e" />
-                      <span style={{ fontWeight: 500, fontSize: 15, color: '#374151' }}>{barcode}</span>
+                      <ScanLine size={16} color={theme.green} />
+                      <span style={{ fontWeight: 500, fontSize: 15, color: theme.text }}>{barcode}</span>
                     </div>
-                    <ChevronRight size={16} color="#9ca3af" />
+                    <ChevronRight size={16} color={theme.textSubtle} />
                   </motion.button>
                 ))}
               </div>
@@ -241,28 +293,71 @@ export default function ScanPage() {
         {mode === 'camera' && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             <div style={{
-              background: 'white', borderRadius: 20, padding: '1.5rem',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-              border: '1px solid #e5e7eb',
+              background: theme.cardBg, borderRadius: 20, padding: '1.5rem',
+              boxShadow: theme.isDark ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.08)',
+              border: `1px solid ${theme.cardBorder}`,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h2 style={{ fontWeight: 700, fontSize: 18, color: '#111827' }}>
+                <h2 style={{ fontWeight: 700, fontSize: 18, color: theme.text }}>
                   📷 Point at barcode
                 </h2>
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => { scannerRef.current?.clear().catch(() => {}); setMode('idle') }}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-                >
-                  <X size={22} color="#6b7280" />
-                </motion.button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {/* Torch toggle */}
+                  {torchSupported !== false && (
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={toggleTorch}
+                      title="Toggle flashlight"
+                      style={{
+                        background: torchOn
+                          ? (theme.isDark ? '#1a4a28' : '#dcfce7')
+                          : theme.btnSecBg,
+                        border: `1.5px solid ${torchOn ? theme.green : theme.cardBorder}`,
+                        borderRadius: 8, padding: '6px 10px',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+                        color: torchOn ? theme.green : theme.textMuted,
+                        fontSize: 13, fontWeight: 600,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      🔦 {torchOn ? 'On' : 'Off'}
+                    </motion.button>
+                  )}
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => { scannerRef.current?.stop().catch(() => {}); setMode('idle') }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+                  >
+                    <X size={22} color={theme.textMuted} />
+                  </motion.button>
+                </div>
               </div>
+
+              {torchMsg && (
+                <div style={{
+                  background: theme.isDark ? '#1a1208' : '#fffbeb',
+                  color: '#d97706', fontSize: 13, padding: '8px 12px',
+                  borderRadius: 8, marginBottom: 12, border: '1px solid #fcd34d',
+                }}>
+                  {torchMsg}
+                </div>
+              )}
+
+              {error && (
+                <div style={{
+                  background: theme.isDark ? '#1f0a0a' : '#fee2e2',
+                  color: '#dc2626', fontSize: 13, padding: '8px 12px',
+                  borderRadius: 8, marginBottom: 12,
+                }}>
+                  {error}
+                </div>
+              )}
 
               <div style={{ borderRadius: 12, overflow: 'hidden' }}>
                 <div id="qr-reader" />
               </div>
 
-              <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 13, marginTop: 12 }}>
+              <p style={{ textAlign: 'center', color: theme.textSubtle, fontSize: 13, marginTop: 12 }}>
                 Hold the barcode steady within the viewfinder · EAN-13, UPC-A supported
               </p>
             </div>
@@ -272,8 +367,9 @@ export default function ScanPage() {
               onClick={() => setMode('manual')}
               style={{
                 width: '100%', marginTop: 16, padding: '14px', borderRadius: 12,
-                border: '2px solid #e5e7eb', background: 'white', cursor: 'pointer',
-                fontWeight: 600, fontSize: 15, color: '#374151',
+                border: `2px solid ${theme.cardBorder}`,
+                background: theme.cardBg, cursor: 'pointer',
+                fontWeight: 600, fontSize: 15, color: theme.text,
               }}
             >
               Can't scan? Enter manually →
@@ -285,12 +381,12 @@ export default function ScanPage() {
         {mode === 'manual' && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             <div style={{
-              background: 'white', borderRadius: 20, padding: '2rem',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-              border: '1px solid #e5e7eb',
+              background: theme.cardBg, borderRadius: 20, padding: '2rem',
+              boxShadow: theme.isDark ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.08)',
+              border: `1px solid ${theme.cardBorder}`,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <h2 style={{ fontWeight: 700, fontSize: 18, color: '#111827' }}>
+                <h2 style={{ fontWeight: 700, fontSize: 18, color: theme.text }}>
                   Enter Barcode Number
                 </h2>
                 <motion.button
@@ -298,7 +394,7 @@ export default function ScanPage() {
                   onClick={() => { setMode('idle'); setManual(''); setError('') }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
                 >
-                  <X size={22} color="#6b7280" />
+                  <X size={22} color={theme.textMuted} />
                 </motion.button>
               </div>
 
@@ -311,16 +407,16 @@ export default function ScanPage() {
                 autoFocus
                 style={{
                   width: '100%', padding: '14px 16px',
-                  border: `2px solid ${error ? '#ef4444' : '#e5e7eb'}`,
+                  border: `2px solid ${error ? '#ef4444' : theme.inputBorder}`,
                   borderRadius: 12, fontSize: 18, fontFamily: 'inherit',
                   outline: 'none', letterSpacing: '0.05em', marginBottom: 8,
-                  background: 'white',
+                  background: theme.inputBg, color: theme.text,
                 }}
               />
 
               {error && <p style={{ color: '#ef4444', fontSize: 14, marginBottom: 12 }}>{error}</p>}
 
-              <p style={{ color: '#9ca3af', fontSize: 13, marginBottom: 20 }}>
+              <p style={{ color: theme.textSubtle, fontSize: 13, marginBottom: 20 }}>
                 Find the barcode number printed below the barcode stripes on the package.
               </p>
 
@@ -341,7 +437,7 @@ export default function ScanPage() {
 
             {/* Sample barcodes */}
             <div style={{ marginTop: 24 }}>
-              <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 12, fontWeight: 600 }}>
+              <p style={{ fontSize: 14, color: theme.textMuted, marginBottom: 12, fontWeight: 600 }}>
                 Try a sample barcode:
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -357,8 +453,9 @@ export default function ScanPage() {
                     onClick={() => setManual(item.barcode)}
                     style={{
                       padding: '8px 12px', borderRadius: 8,
-                      border: '1px solid #e5e7eb', background: 'white',
-                      cursor: 'pointer', fontSize: 13, fontWeight: 500, color: '#374151',
+                      border: `1px solid ${theme.cardBorder}`,
+                      background: theme.cardBg,
+                      cursor: 'pointer', fontSize: 13, fontWeight: 500, color: theme.text,
                     }}
                   >
                     {item.name}
