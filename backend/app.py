@@ -305,162 +305,212 @@ def row_to_dict(row):
 
 
 # ─────────────────────────────────────────────
-# Ingredient feature extractor
+# Ingredient presence checkers (for zero-tolerance / allergy logic)
 # ─────────────────────────────────────────────
-INGREDIENT_PATTERNS = {
-    "has_high_sugar":            ["sugar", "corn syrup", "fructose", "dextrose", "glucose", "cane sugar", "maltose", "sucrose"],
-    "has_high_sodium":           ["sodium", " salt"],
-    "has_gluten":                ["wheat", "barley", "rye", "gluten", "semolina", "spelt", "kamut"],
-    "has_dairy":                 ["milk", "cream", "cheese", "butter", "whey", "casein", "lactose", "skim milk"],
-    "has_nuts":                  ["peanut", "almond", "cashew", "walnut", "hazelnut", "pecan", "pistachio", "macadamia"],
-    "has_preservatives":         ["sodium benzoate", "potassium sorbate", "bha", "bht", "tbhq", "e211", "e202", "e320", "e321"],
-    "has_artificial_colors":     ["red 40", "yellow 5", "yellow 6", "blue 1", "e102", "e110", "e129", "tartrazine", "sunset yellow", "caramel color"],
-    "has_trans_fat":             ["hydrogenated", "partially hydrogenated", "trans fat"],
-    "has_soy":                   ["soy", "soya", "soybean"],
-    "has_eggs":                  ["egg", "albumin", "ovalbumin"],
-    "has_artificial_sweeteners": ["aspartame", "sucralose", "saccharin", "acesulfame", "stevia"],
-    "has_msg":                   ["monosodium glutamate", "msg", "e621"],
-    "has_caffeine":              ["caffeine", "guarana", "coffee extract"],
-    "has_animal_ingredients":    ["gelatin", "lard", "tallow", "rennet", "carmine", "isinglass"],
+_ING = {
+    "gluten":        ["wheat", "barley", "rye", "gluten", "semolina", "spelt", "kamut", "malt"],
+    "dairy":         ["milk", "cream", "cheese", "butter", "whey", "casein", "lactose", "skim milk"],
+    "nuts":          ["peanut", "almond", "cashew", "walnut", "hazelnut", "pecan", "pistachio", "macadamia"],
+    "soy":           ["soy", "soya", "soybean"],
+    "egg":           ["egg", "albumin", "ovalbumin"],
+    "trans_fat":     ["partially hydrogenated", "trans fat"],
+    "preservatives": ["sodium benzoate", "potassium sorbate", "bha", "bht", "tbhq"],
+    "colors":        ["red 40", "yellow 5", "yellow 6", "blue 1", "tartrazine", "sunset yellow"],
+    "caffeine":      ["caffeine", "guarana", "coffee extract"],
+    "msg":           ["monosodium glutamate", " msg", "e621"],
+    "sweeteners":    ["aspartame", "sucralose", "saccharin", "acesulfame"],
+    "animal":        ["gelatin", "lard", "tallow", "rennet", "carmine", "isinglass"],
 }
 
-FEATURE_ORDER = list(INGREDIENT_PATTERNS.keys())
+def _has(text: str, key: str) -> bool:
+    return any(kw in text for kw in _ING[key])
 
 
-def extract_ingredient_features(ingredients_text: str) -> list:
-    text = (ingredients_text or "").lower()
-    return [int(any(kw in text for kw in INGREDIENT_PATTERNS[feat])) for feat in FEATURE_ORDER]
+# ─────────────────────────────────────────────
+# Quantity-based thresholds (WHO / ADA / AHA / FDA)
+# Per 100 g of product — source: LabelSafe Ingredient Health Reference
+# ─────────────────────────────────────────────
+# Sugar (g / 100 g)
+#   Default  : caution ≥10 g, avoid ≥20 g  (WHO: free sugars <10 % of energy)
+#   Diabetes : caution ≥5 g,  avoid ≥10 g  (ADA: ≤10 g added sugar per snack)
+_SUGAR = {
+    "default":  {"caution": 10.0, "avoid": 20.0},
+    "diabetes": {"caution":  5.0, "avoid": 10.0},
+}
+
+# Sodium (mg / 100 g)
+#   Default      : caution ≥400 mg, avoid ≥1000 mg  (WHO: ≤2000 mg/day)
+#   Hypertension : caution ≥200 mg, avoid ≥400 mg   (AHA ideal: ≤1500 mg/day)
+#   Kidney       : same as hypertension              (ESH CKD guidance)
+_SODIUM = {
+    "default":      {"caution": 400.0, "avoid": 1000.0},
+    "hypertension": {"caution": 200.0, "avoid":  400.0},
+    "kidney":       {"caution": 200.0, "avoid":  400.0},
+}
 
 
-def extract_user_features(profile: dict) -> list:
-    diseases  = [d.lower() for d in (profile.get("diseases") or [])]
-    allergies = [a.lower() for a in (profile.get("allergies") or [])]
-
-    def has_disease(*keys):
-        return int(any(k in d for k in keys for d in diseases))
-
-    def has_allergy(*keys):
-        return int(any(k in a for k in keys for a in allergies))
-
-    return [
-        has_disease("diabetes"),
-        has_disease("bp", "blood pressure", "hypertension"),
-        has_disease("celiac"),
-        has_disease("lactose"),
-        has_disease("heart"),
-        has_disease("kidney"),
-        has_allergy("nut", "peanut"),
-        has_allergy("gluten"),
-        has_allergy("dairy"),
-        has_allergy("egg"),
-        has_allergy("soy"),
-    ]
-
-
-def _rule_based_rating(f: list) -> tuple:
-    """Deterministic rule-based rating used as ground truth for safety checks."""
-    # f[0..13] = ingredient features, f[14..24] = user features
-    if (f[4] and f[20]) or (f[2] and (f[16] or f[21])) or \
-       (f[3] and (f[17] or f[22])) or (f[9] and f[23]) or \
-       (f[8] and f[24]) or (f[0] and f[14]) or \
-       (f[1] and f[15]) or (f[1] and f[19]) or (f[7] and f[18]):
-        return "avoid", 0.90, [0.05, 0.05, 0.90]
-    caution = sum([int(f[5]), int(f[6]), int(f[7]),
-                   int(f[0] and not f[14]), int(f[1] and not f[15] and not f[19])])
-    if caution >= 1:
-        return "caution", 0.75, [0.15, 0.75, 0.10]
-    return "safe", 0.85, [0.85, 0.10, 0.05]
-
-
-def predict_rating(feature_vector: list) -> tuple:
-    """Returns (label_str, confidence, probabilities).
-    ML model is used when available; rule-based logic acts as an override
-    to prevent false positives on clean products.
+# ─────────────────────────────────────────────
+# Unified threshold-based rating engine
+# ─────────────────────────────────────────────
+def rate_product(product_data: dict, profile: dict) -> tuple:
     """
-    labels = ["safe", "caution", "avoid"]
-    rule_rating, _, rule_proba = _rule_based_rating(feature_vector)
+    Returns (rating, confidence, probabilities, reasons).
 
-    if not ML_AVAILABLE:
-        return rule_rating, round(max(rule_proba), 2), rule_proba
+    Rating tiers (per LabelSafe reference, Section 4):
+      safe    — all nutrients below caution threshold, no zero-tolerance hits
+      caution — a nutrient exceeds caution but not avoid threshold, or
+                lactose intolerance + dairy present
+      avoid   — a nutrient exceeds avoid threshold, OR zero-tolerance ingredient
+                present (gluten for celiac, allergen for allergy profile)
+    """
+    text = (product_data.get("ingredients") or "").lower()
+    sugar_g  = float(product_data.get("per_100g_sugar")  or 0)
+    sodium_mg = float(product_data.get("per_100g_sodium") or 0)
 
-    vec = np.array(feature_vector).reshape(1, -1)
-    pred = int(_clf.predict(vec)[0])
-    proba = _clf.predict_proba(vec)[0].tolist()
-    label_indices = list(_clf.classes_)
-    full_proba = [0.0, 0.0, 0.0]
-    for idx, cls in enumerate(label_indices):
-        full_proba[cls] = proba[idx]
-    ml_rating = labels[pred]
+    diseases  = [d.lower() for d in (profile.get("diseases")  or [])]
+    allergies = [a.lower() for a in (profile.get("allergies") or [])]
+    diet      = (profile.get("diet_type") or "non-vegetarian").lower()
 
-    # If rule-based says avoid (definitive allergy/condition match), honour that.
-    if rule_rating == "avoid":
-        return "avoid", 0.95, rule_proba
+    def has_d(*keys): return any(k in d for k in keys for d in diseases)
+    def has_a(*keys): return any(k in a for k in keys for a in allergies)
 
-    # If no ingredient flags at all (completely clean product), trust rules over ML.
-    # ML may false-positive on users who have conditions but scan clean products.
-    ing_features = feature_vector[:14]
-    if sum(ing_features) == 0:
-        return rule_rating, round(max(rule_proba), 2), rule_proba
-
-    # Sanity guard: if ML says avoid but rules say safe, downgrade to caution.
-    if ml_rating == "avoid" and rule_rating == "safe":
-        return "caution", round(max(full_proba), 2), full_proba
-
-    return ml_rating, round(max(full_proba), 2), full_proba
-
-
-
-def generate_reasons(ing_feat: list, user_feat: list, rating: str, profile: dict) -> list:
+    levels  = []   # 0=safe, 1=caution, 2=avoid
     reasons = []
-    diet = (profile.get("diet_type") or "non-vegetarian").lower()
 
-    # user_feat indices: 0=diabetes, 1=bp, 2=celiac, 3=lactose, 4=heart,
-    #                    5=kidney, 6=nut_allergy, 7=gluten_allergy, 8=dairy_allergy,
-    #                    9=egg_allergy, 10=soy_allergy
-    checks = [
-        (ing_feat[0] and user_feat[0],  "🚫 Contains high sugar — harmful for diabetes"),
-        (ing_feat[1] and user_feat[1],  "🚫 High sodium content — avoid with high blood pressure"),
-        (ing_feat[1] and user_feat[5],  "🚫 High sodium — avoid with kidney issues"),
-        (ing_feat[2] and user_feat[2],  "🚫 Contains gluten — unsafe for celiac disease"),
-        (ing_feat[2] and user_feat[7],  "🚫 Contains gluten — you have a gluten allergy"),
-        (ing_feat[3] and user_feat[3],  "🚫 Contains dairy/lactose — avoid if lactose intolerant"),
-        (ing_feat[3] and user_feat[8],  "🚫 Contains dairy — you have a dairy allergy"),
-        (ing_feat[4] and user_feat[6],  "🚫 Contains nuts — you have a nut allergy (risk of anaphylaxis)"),
-        (ing_feat[7] and user_feat[4],  "🚫 Contains trans fat — very harmful with heart conditions"),
-        (ing_feat[9] and user_feat[9],  "🚫 Contains eggs — you have an egg allergy"),
-        (ing_feat[8] and user_feat[10], "🚫 Contains soy — you have a soy allergy"),
-        (ing_feat[12] and user_feat[4], "⚠️ Contains caffeine — use caution with heart conditions"),
-        (ing_feat[5],  "Contains artificial preservatives (BHA/BHT/sodium benzoate) — may cause sensitivity"),
-        (ing_feat[6],  "Contains artificial food colors (Red 40/Yellow 5/6) — may cause reactions in sensitive individuals"),
-        (ing_feat[7] and not user_feat[4], "Contains trans fat — increases cardiovascular risk for everyone"),
-        (ing_feat[0] and not user_feat[0], "Contains added sugars — moderate intake recommended"),
-        (ing_feat[11], "Contains MSG — may cause sensitivity in some people"),
-        (ing_feat[10], "Contains artificial sweeteners — minimal concern but consume in moderation"),
-        (ing_feat[12] and not user_feat[4], "Contains caffeine — be aware if sensitive or pregnant"),
-    ]
+    # ── 1. Zero-tolerance: celiac / gluten allergy ──────────────────────────
+    if _has(text, "gluten"):
+        if has_d("celiac"):
+            levels.append(2)
+            reasons.append("🚫 Contains gluten — zero-tolerance for celiac disease (wheat / barley / rye / malt)")
+        if has_a("gluten"):
+            levels.append(2)
+            reasons.append("🚫 Contains gluten — you have a gluten allergy")
 
-    for condition, message in checks:
-        if condition:
-            reasons.append(message)
+    # ── 2. Zero-tolerance: nut allergy ──────────────────────────────────────
+    if _has(text, "nuts") and has_a("nut", "peanut"):
+        levels.append(2)
+        reasons.append("🚫 Contains nuts — you have a nut allergy (anaphylaxis risk)")
 
-    # Diet type checks
-    if ing_feat[13]:
-        if diet == "vegan":
-            reasons.append("⚠️ Contains animal-derived ingredients (gelatin/lard/carmine) — not vegan")
-        elif diet == "vegetarian":
-            reasons.append("⚠️ May contain animal-derived ingredients — verify if suitable for vegetarians")
+    # ── 3. Zero-tolerance: dairy allergy vs. lactose intolerance ────────────
+    if _has(text, "dairy"):
+        if has_a("dairy"):
+            levels.append(2)
+            reasons.append("🚫 Contains dairy — you have a dairy allergy")
+        elif has_d("lactose"):
+            # Section 3.6: lactose tolerance is individual → Caution, not Avoid
+            levels.append(1)
+            reasons.append("⚠️ Contains dairy/lactose — caution if lactose intolerant (individual tolerance varies; consider lactase supplements)")
 
-    if not ing_feat[3] and profile.get("is_vegan") == 0 and diet == "vegan":
-        pass  # no dairy issue
+    # ── 4. Zero-tolerance: soy allergy ──────────────────────────────────────
+    if _has(text, "soy") and has_a("soy"):
+        levels.append(2)
+        reasons.append("🚫 Contains soy — you have a soy allergy")
 
-    if not reasons:
-        if rating == "safe":
-            reasons.append("✅ No harmful ingredients detected for your health profile")
-            reasons.append("Ingredients appear safe based on your conditions and allergies")
+    # ── 5. Zero-tolerance: egg allergy ──────────────────────────────────────
+    if _has(text, "egg") and has_a("egg"):
+        levels.append(2)
+        reasons.append("🚫 Contains eggs — you have an egg allergy")
+
+    # ── 6. Sugar — quantity-based (g / 100 g) ───────────────────────────────
+    is_diabetic    = has_d("diabetes")
+    sugar_thresh   = _SUGAR["diabetes"] if is_diabetic else _SUGAR["default"]
+    condition_label = "diabetes" if is_diabetic else "general"
+
+    if sugar_g >= sugar_thresh["avoid"]:
+        levels.append(2)
+        reasons.append(
+            f"🚫 Very high sugar ({sugar_g:.1f} g/100 g) — exceeds {condition_label} avoid threshold "
+            f"({sugar_thresh['avoid']:.0f} g/100 g)"
+        )
+    elif sugar_g >= sugar_thresh["caution"]:
+        levels.append(1)
+        reasons.append(
+            f"⚠️ Elevated sugar ({sugar_g:.1f} g/100 g) — above {condition_label} caution threshold "
+            f"({sugar_thresh['caution']:.0f} g/100 g)"
+        )
+
+    # ── 7. Sodium — quantity-based (mg / 100 g) ─────────────────────────────
+    is_hypertensive = has_d("bp", "blood pressure", "hypertension")
+    has_kidney      = has_d("kidney")
+    if is_hypertensive or has_kidney:
+        sodium_thresh  = _SODIUM["kidney"] if has_kidney else _SODIUM["hypertension"]
+        sodium_label   = "kidney disease" if has_kidney else "hypertension"
+    else:
+        sodium_thresh  = _SODIUM["default"]
+        sodium_label   = "general"
+
+    if sodium_mg >= sodium_thresh["avoid"]:
+        levels.append(2)
+        reasons.append(
+            f"🚫 Very high sodium ({sodium_mg:.0f} mg/100 g) — exceeds {sodium_label} avoid threshold "
+            f"({sodium_thresh['avoid']:.0f} mg/100 g)"
+        )
+    elif sodium_mg >= sodium_thresh["caution"]:
+        levels.append(1)
+        reasons.append(
+            f"⚠️ High sodium ({sodium_mg:.0f} mg/100 g) — above {sodium_label} caution threshold "
+            f"({sodium_thresh['caution']:.0f} mg/100 g)"
+        )
+
+    # ── 8. Trans fat — presence-based (no safe threshold per FDA) ───────────
+    if _has(text, "trans_fat"):
+        if has_d("heart"):
+            levels.append(2)
+            reasons.append("🚫 Contains trans fat — avoid with heart disease (AHA: no safe level)")
         else:
-            reasons.append("Some ingredient concerns detected — review full list below")
+            levels.append(1)
+            reasons.append("⚠️ Contains partially hydrogenated / trans fat — associated with cardiovascular risk")
 
-    return reasons
+    # ── 9. Other ingredient cautions ────────────────────────────────────────
+    if _has(text, "preservatives"):
+        levels.append(1)
+        reasons.append("⚠️ Contains artificial preservatives (BHA / BHT / sodium benzoate)")
+
+    if _has(text, "colors"):
+        levels.append(1)
+        reasons.append("⚠️ Contains artificial food dyes (Red 40 / Yellow 5 / Yellow 6)")
+
+    if _has(text, "caffeine"):
+        if has_d("heart"):
+            levels.append(1)
+            reasons.append("⚠️ Contains caffeine — use caution with heart conditions")
+        else:
+            reasons.append("ℹ️ Contains caffeine — be mindful if sensitive or pregnant")
+
+    if _has(text, "msg"):
+        reasons.append("ℹ️ Contains MSG — may cause sensitivity in some people")
+
+    if _has(text, "sweeteners"):
+        reasons.append("ℹ️ Contains artificial sweeteners — generally recognised as safe in moderation")
+
+    # ── 10. Diet-type checks ────────────────────────────────────────────────
+    if _has(text, "animal"):
+        if diet == "vegan":
+            levels.append(1)
+            reasons.append("⚠️ Contains animal-derived ingredients (gelatin / carmine / lard) — not vegan")
+        elif diet == "vegetarian":
+            reasons.append("ℹ️ May contain animal-derived ingredients — verify if suitable for vegetarians")
+
+    # ── Aggregate ────────────────────────────────────────────────────────────
+    worst = max(levels) if levels else 0
+    if worst == 2:
+        rating      = "avoid"
+        confidence  = 0.93
+        proba       = [0.03, 0.04, 0.93]
+    elif worst == 1:
+        rating      = "caution"
+        confidence  = 0.82
+        proba       = [0.13, 0.82, 0.05]
+    else:
+        rating      = "safe"
+        confidence  = 0.90
+        proba       = [0.90, 0.07, 0.03]
+        reasons     = [
+            "✅ All nutrient levels within safe thresholds for your health profile",
+            "No allergens, zero-tolerance ingredients, or excessive sugar / sodium detected",
+        ]
+
+    return rating, confidence, proba, reasons
 
 
 # ─────────────────────────────────────────────
@@ -613,12 +663,7 @@ def analyze():
     profile["diseases"]  = json.loads(profile["diseases"] or "[]")
     profile["allergies"] = json.loads(profile["allergies"] or "[]")
 
-    ing_feat  = extract_ingredient_features(product_data.get("ingredients", ""))
-    user_feat = extract_user_features(profile)
-    fv        = ing_feat + user_feat
-
-    rating, confidence, probabilities = predict_rating(fv)
-    reasons = generate_reasons(ing_feat, user_feat, rating, profile)
+    rating, confidence, probabilities, reasons = rate_product(product_data, profile)
 
     return jsonify({
         "rating":        rating,
@@ -631,7 +676,7 @@ def analyze():
         "reasons":   reasons,
         "product":   product_data,
         "user_name": profile["name"],
-        "ml_used":   ML_AVAILABLE,
+        "ml_used":   False,
     }), 200
 
 
@@ -682,11 +727,7 @@ def _generate_chat_response(message, name, diseases, allergies, diet, product_ba
         conn.close()
         if row:
             product = row_to_dict(row)
-            ing_feat  = extract_ingredient_features(product.get("ingredients", ""))
-            user_feat = extract_user_features(profile)
-            fv = ing_feat + user_feat
-            rating, _, _ = predict_rating(fv)
-            reasons = generate_reasons(ing_feat, user_feat, rating, profile)
+            rating, _, _, reasons = rate_product(product, profile)
             reasons_str = "\n".join(f"• {r}" for r in reasons[:4])
             emoji = {"safe": "✅", "caution": "⚠️", "avoid": "🚫"}.get(rating, "")
             return (f"For **{product['product_name']}** — Rating: **{rating.upper()}** {emoji}\n\n"
