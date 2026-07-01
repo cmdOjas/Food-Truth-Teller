@@ -55,7 +55,7 @@ export default function Navbar() {
               <Leaf size={20} color="white" />
             </motion.div>
             <span style={{ fontWeight: 700, fontSize: 18, color: theme.text }}>
-              Food<span style={{ color: theme.green }}>Truth</span>
+              EatWise<span style={{ color: theme.green }}>AI</span>
             </span>
           </Link>
 

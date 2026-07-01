@@ -31,12 +31,7 @@ export default function ScanPage() {
   const [success, setSuccess] = useState(false)
   const [recentScans, setRecentScans] = useState<string[]>(getRecentScans())
   const [loadingBarcode, setLoadingBarcode] = useState('')
-  const [torchOn, setTorchOn] = useState(false)
-  const [torchSupported, setTorchSupported] = useState<boolean | null>(null)
-  const [torchMsg, setTorchMsg] = useState('')
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
-  const trackRef = useRef<MediaStreamTrack | null>(null)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const userName = localStorage.getItem('user_name') || 'there'
 
   const handleScan = (barcode: string) => {
@@ -81,49 +76,10 @@ export default function ScanPage() {
 
     scannerRef.current = scanner
 
-    // Poll until the video track is available, then check torch support
-    pollRef.current = setInterval(() => {
-      const videoEl = document.querySelector('#qr-reader video') as HTMLVideoElement | null
-      if (videoEl?.srcObject) {
-        const tracks = (videoEl.srcObject as MediaStream).getVideoTracks()
-        if (tracks.length > 0) {
-          const track = tracks[0]
-          trackRef.current = track
-          try {
-            const caps = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean }
-            setTorchSupported(!!caps?.torch)
-          } catch {
-            setTorchSupported(false)
-          }
-          clearInterval(pollRef.current!)
-        }
-      }
-    }, 600)
-
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current)
       scannerRef.current?.clear().catch(() => {})
-      setTorchOn(false)
-      setTorchSupported(null)
-      setTorchMsg('')
-      trackRef.current = null
     }
   }, [mode])
-
-  const toggleTorch = async () => {
-    if (!trackRef.current) return
-    const next = !torchOn
-    try {
-      await trackRef.current.applyConstraints({
-        advanced: [{ torch: next } as MediaTrackConstraintSet],
-      })
-      setTorchOn(next)
-      setTorchMsg('')
-    } catch {
-      setTorchSupported(false)
-      setTorchMsg('Flash not supported on this device')
-    }
-  }
 
   const handleManualSubmit = () => {
     const barcode = manual.trim()
@@ -303,46 +259,14 @@ export default function ScanPage() {
                 <h2 style={{ fontWeight: 700, fontSize: 18, color: theme.text }}>
                   📷 Point at barcode
                 </h2>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  {/* Torch toggle — only shown if supported (or status unknown) */}
-                  {torchSupported !== false && (
-                    <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      onClick={toggleTorch}
-                      title="Toggle flashlight"
-                      style={{
-                        background: torchOn
-                          ? (theme.isDark ? '#1a4a28' : '#dcfce7')
-                          : theme.btnSecBg,
-                        border: `1.5px solid ${torchOn ? theme.green : theme.cardBorder}`,
-                        borderRadius: 8, padding: '6px 10px',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-                        color: torchOn ? theme.green : theme.textMuted,
-                        fontSize: 13, fontWeight: 600, transition: 'all 0.2s',
-                      }}
-                    >
-                      🔦 {torchOn ? 'On' : 'Off'}
-                    </motion.button>
-                  )}
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => { scannerRef.current?.clear().catch(() => {}); setMode('idle') }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-                  >
-                    <X size={22} color={theme.textMuted} />
-                  </motion.button>
-                </div>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => { scannerRef.current?.clear().catch(() => {}); setMode('idle') }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+                >
+                  <X size={22} color={theme.textMuted} />
+                </motion.button>
               </div>
-
-              {torchMsg && (
-                <div style={{
-                  background: theme.isDark ? '#1a1208' : '#fffbeb',
-                  color: '#d97706', fontSize: 13, padding: '8px 12px',
-                  borderRadius: 8, marginBottom: 10, border: '1px solid #fcd34d',
-                }}>
-                  {torchMsg}
-                </div>
-              )}
 
               {/* Scanner mounts here */}
               <div style={{ borderRadius: 12, overflow: 'hidden' }}>

@@ -112,7 +112,16 @@ export default function LandingPage() {
               border: `1px solid ${theme.isDark ? '#1a4a28' : 'transparent'}`,
             }}>
               <Leaf size={14} />
-              AI-Powered Food Analysis
+              Scan. Understand. Decide.
+            </span>
+          </motion.div>
+
+          <motion.div
+            initial="hidden" animate="visible" variants={fadeUp} custom={0.5}
+            style={{ marginBottom: 16, marginTop: 8 }}
+          >
+            <span style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)', fontWeight: 800, color: theme.text }}>
+              EatWise<span style={{ color: theme.green }}>AI</span>
             </span>
           </motion.div>
 
@@ -435,7 +444,7 @@ export default function LandingPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
           <Leaf size={14} color={theme.green} />
-          <span style={{ fontWeight: 600, color: theme.textMuted }}>Food Truth Teller</span>
+          <span style={{ fontWeight: 600, color: theme.textMuted }}>EatWise AI</span>
         </div>
         <p>Built with ❤️ for healthier food choices · Not a substitute for medical advice</p>
       </footer>

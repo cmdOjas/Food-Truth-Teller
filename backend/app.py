@@ -1,5 +1,5 @@
 """
-Food Truth Teller - Flask Backend
+EatWise AI - Flask Backend
 Simple SQLite-based REST API for personalized food analysis.
 Run: python app.py
 """
@@ -519,13 +519,16 @@ def rate_product(product_data: dict, profile: dict) -> tuple:
 def fetch_from_openfoodfacts(barcode: str) -> dict | None:
     url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
     try:
-        resp = requests.get(url, timeout=8, headers={"User-Agent": "FoodTruthTeller/1.0"})
+        print(f"[OFF] Fetching barcode {barcode} from Open Food Facts")
+        resp = requests.get(url, timeout=10, headers={"User-Agent": "EatWiseAI/1.0"})
+        resp.raise_for_status()
         data = resp.json()
         if data.get("status") != 1:
+            print(f"[OFF] Barcode {barcode} not found in Open Food Facts (status={data.get('status')})")
             return None
         p = data["product"]
         nutriments = p.get("nutriments", {})
-        return {
+        result = {
             "barcode": barcode,
             "product_name": p.get("product_name") or p.get("product_name_en") or "Unknown Product",
             "brand": p.get("brands", "Unknown"),
@@ -534,11 +537,19 @@ def fetch_from_openfoodfacts(barcode: str) -> dict | None:
             "is_vegetarian": int("en:vegetarian" in p.get("labels_tags", [])),
             "is_vegan": int("en:vegan" in p.get("labels_tags", [])),
             "per_100g_sugar": float(nutriments.get("sugars_100g") or 0),
-            "per_100g_sodium": float(nutriments.get("sodium_100g") or 0) * 1000,  # kg→mg
+            "per_100g_sodium": float(nutriments.get("sodium_100g") or 0) * 1000,  # g→mg
             "image_url": p.get("image_front_url") or p.get("image_url", ""),
         }
+        print(f"[OFF] Found: {result['product_name']} ({result['brand']})")
+        return result
+    except requests.exceptions.Timeout:
+        print(f"[OFF] Timeout fetching barcode {barcode}")
+        return None
+    except requests.exceptions.ConnectionError as e:
+        print(f"[OFF] Network error fetching barcode {barcode}: {e}")
+        return None
     except Exception as e:
-        print(f"[OFF] Error fetching {barcode}: {e}")
+        print(f"[OFF] Unexpected error fetching barcode {barcode}: {type(e).__name__}: {e}")
         return None
 
 
@@ -644,20 +655,25 @@ def analyze():
     if not user_id or not barcode:
         return jsonify({"error": "user_id and barcode are required"}), 400
 
+    print(f"[analyze] user_id={user_id} barcode={barcode}")
+
     conn = get_db()
     user_row    = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
     product_row = conn.execute("SELECT * FROM products WHERE barcode=?", (barcode,)).fetchone()
     conn.close()
 
     if not user_row:
-        return jsonify({"error": "User not found"}), 404
+        print(f"[analyze] User {user_id} not found — stale localStorage ID?")
+        return jsonify({"error": "Profile not found. Please reset and create a new profile."}), 404
 
     product_data = row_to_dict(product_row) if product_row else None
     if not product_data:
-        # Try fetching
+        print(f"[analyze] Barcode {barcode} not in local DB, trying Open Food Facts...")
         product_data = fetch_from_openfoodfacts(barcode)
         if not product_data:
-            return jsonify({"error": f"Product {barcode} not found"}), 404
+            print(f"[analyze] Product {barcode} not found anywhere")
+            return jsonify({"error": f"Product not found for barcode {barcode}. Try scanning a different product or use Sample Products."}), 404
+        print(f"[analyze] Fetched from OFF: {product_data['product_name']}")
 
     profile = row_to_dict(user_row)
     profile["diseases"]  = json.loads(profile["diseases"] or "[]")
@@ -715,7 +731,7 @@ def _generate_chat_response(message, name, diseases, allergies, diet, product_ba
     # Greeting
     if any(w in message for w in ["hello", "hi", "hey", "namaste"]):
         cond_str = ", ".join(diseases) if diseases else "none"
-        return (f"Hello {name}! 👋 I'm your Food Truth Teller assistant.\n\n"
+        return (f"Hello {name}! 👋 I'm your EatWise AI assistant.\n\n"
                 f"Your health conditions: **{cond_str}**\n"
                 f"Allergies: **{', '.join(allergies) if allergies else 'none'}**\n\n"
                 f"Scan a product or ask me anything about food and your health!")

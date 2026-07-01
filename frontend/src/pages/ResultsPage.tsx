@@ -110,7 +110,15 @@ export default function ResultsPage() {
       .analyze(parseInt(userId), barcode)
       .then(setResult)
       .catch(err => {
-        setError(err?.response?.data?.error || 'Product not found. Try a different barcode.')
+        if (err?.response?.data?.error) {
+          setError(err.response.data.error)
+        } else if (err?.code === 'ECONNABORTED' || err?.message?.includes('timeout')) {
+          setError('Request timed out. The product lookup is taking too long — please try again.')
+        } else if (!err?.response) {
+          setError('Cannot reach the server. Make sure the backend is running and try again.')
+        } else {
+          setError('Something went wrong analyzing this product. Please try again.')
+        }
       })
       .finally(() => setLoading(false))
   }, [barcode])
@@ -139,25 +147,41 @@ export default function ResultsPage() {
   }
 
   if (error) {
+    const isServerDown = error.includes('Cannot reach') || error.includes('timed out')
     return (
       <div style={{ minHeight: '100vh', background: theme.pageBg }}>
         <Navbar />
         <div style={{ paddingTop: 80, maxWidth: 500, margin: '0 auto', padding: '80px 1rem 2rem', textAlign: 'center' }}>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-            <AlertTriangle size={56} color="#f59e0b" style={{ marginBottom: 16 }} />
+            <AlertTriangle size={56} color={isServerDown ? '#dc2626' : '#f59e0b'} style={{ marginBottom: 16 }} />
             <h2 style={{ fontSize: 22, fontWeight: 700, color: theme.text, marginBottom: 8 }}>
-              Product Not Found
+              {isServerDown ? 'Connection Error' : 'Product Not Found'}
             </h2>
-            <p style={{ color: theme.textMuted, marginBottom: 24 }}>{error}</p>
-            <button
-              onClick={() => navigate('/scan')}
-              style={{
-                padding: '12px 28px', borderRadius: 10, border: 'none',
-                background: '#22c55e', color: 'white', fontWeight: 700, fontSize: 16, cursor: 'pointer',
-              }}
-            >
-              Try Another Barcode
-            </button>
+            <p style={{ color: theme.textMuted, marginBottom: 24, lineHeight: 1.6 }}>{error}</p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/scan')}
+                style={{
+                  padding: '12px 28px', borderRadius: 10, border: 'none',
+                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                  color: 'white', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(34,197,94,0.3)',
+                }}
+              >
+                Try Another Barcode
+              </button>
+              <button
+                onClick={() => navigate('/results/browse')}
+                style={{
+                  padding: '12px 28px', borderRadius: 10,
+                  border: `2px solid ${theme.cardBorder}`,
+                  background: theme.cardBg,
+                  color: theme.text, fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                }}
+              >
+                Browse Sample Products
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -239,7 +263,7 @@ export default function ResultsPage() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 300, delay: 0.3 }}
-              style={{ fontSize: 56, marginBottom: 8 }}
+              style={{ fontSize: 68, marginBottom: 8, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.25))' }}
             >
               {cfg.emoji}
             </motion.div>
@@ -247,7 +271,7 @@ export default function ResultsPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              style={{ color: 'white', fontSize: 28, fontWeight: 900, letterSpacing: '0.05em' }}
+              style={{ color: 'white', fontSize: 34, fontWeight: 900, letterSpacing: '0.06em', textShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
             >
               {cfg.label}
             </motion.h2>
@@ -255,9 +279,9 @@ export default function ResultsPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 }}
+              style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 6, fontWeight: 500 }}
             >
-              for {result.user_name}'s health profile · {Math.round(confidence * 100)}% confidence
+              for {result.user_name} · {Math.round(confidence * 100)}% confidence
             </motion.p>
 
             {/* Probability bars */}
@@ -299,24 +323,29 @@ export default function ResultsPage() {
               Why this rating?
             </h3>
             <div>
-              {reasons.map((reason, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -15 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.1 }}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 10,
-                    padding: '10px 0',
-                    borderBottom: i < reasons.length - 1 ? `1px solid ${theme.cardBorder}` : 'none',
-                  }}
-                >
-                  <span style={{ fontSize: 16, lineHeight: 1.5, flexShrink: 0 }}>
-                    {reason.startsWith('✅') ? '' : reason.startsWith('🚫') ? '' : reason.startsWith('⚠️') ? '' : '•'}
-                  </span>
-                  <p style={{ fontSize: 14, color: theme.text, lineHeight: 1.6 }}>{reason}</p>
-                </motion.div>
-              ))}
+              {reasons.map((reason, i) => {
+                const borderColor = reason.startsWith('🚫') ? '#ef4444'
+                  : reason.startsWith('⚠️') ? '#f59e0b'
+                  : reason.startsWith('✅') ? '#22c55e'
+                  : theme.cardBorder
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.1 }}
+                    style={{
+                      padding: '10px 12px',
+                      marginBottom: i < reasons.length - 1 ? 8 : 0,
+                      borderRadius: 8,
+                      borderLeft: `3px solid ${borderColor}`,
+                      background: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    }}
+                  >
+                    <p style={{ fontSize: 14, color: theme.text, lineHeight: 1.6, margin: 0 }}>{reason}</p>
+                  </motion.div>
+                )
+              })}
             </div>
           </div>
 

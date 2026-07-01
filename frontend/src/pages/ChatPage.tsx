@@ -106,7 +106,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '0', role: 'bot', timestamp: new Date().toISOString(),
-      content: `Hello ${userName}! 🌿 I'm your Food Truth Teller assistant.\n\nI can help you understand how different foods affect your health, explain ingredients, and answer questions about your profile.\n\nWhat would you like to know?`,
+      content: `Hello ${userName}! 🌿 I'm your EatWise AI assistant.\n\nI can help you understand how different foods affect your health, explain ingredients, and answer questions about your profile.\n\nWhat would you like to know?`,
     },
   ])
   const [input, setInput] = useState('')
@@ -171,7 +171,7 @@ export default function ChatPage() {
             <Bot size={22} color="white" />
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 16, color: theme.text }}>Food Truth AI</div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: theme.text }}>EatWise AI</div>
             <div style={{ fontSize: 13, color: theme.green, display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: theme.green }} />
               Online · Personalized to your profile
