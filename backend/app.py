@@ -320,6 +320,18 @@ _ING = {
     "msg":           ["monosodium glutamate", " msg", "e621"],
     "sweeteners":    ["aspartame", "sucralose", "saccharin", "acesulfame"],
     "animal":        ["gelatin", "lard", "tallow", "rennet", "carmine", "isinglass"],
+    "non_veg_ingredients": [
+        "chicken", "beef", "pork", "mutton", "lamb", "turkey",
+        "fish", "salmon", "tuna", "shrimp", "prawn", "anchovy", "sardine",
+        "crab", "lobster", "squid", "clam", "oyster", "gelatin", "lard",
+        "tallow", "suet", "rennet", "carmine", "isinglass", "bone broth",
+        "meat extract", "poultry",
+    ],
+    "dairy_vegan": [
+        "milk", "cream", "cheese", "butter", "whey", "casein",
+        "lactose", "ghee", "paneer", "skim milk", "whole milk",
+        "condensed milk", "dairy",
+    ],
 }
 
 def _has(text: str, key: str) -> bool:
@@ -484,12 +496,25 @@ def rate_product(product_data: dict, profile: dict) -> tuple:
         reasons.append("ℹ️ Contains artificial sweeteners — generally recognised as safe in moderation")
 
     # ── 10. Diet-type checks ────────────────────────────────────────────────
-    if _has(text, "animal"):
-        if diet == "vegan":
+    if diet in ("vegetarian", "vegan"):
+        non_veg_hits = [kw for kw in _ING["non_veg_ingredients"] if kw in text]
+        if _has(text, "egg"):
+            non_veg_hits.append("egg")
+        if non_veg_hits:
+            found_str = " / ".join(sorted(set(non_veg_hits))[:3])
             levels.append(1)
-            reasons.append("⚠️ Contains animal-derived ingredients (gelatin / carmine / lard) — not vegan")
-        elif diet == "vegetarian":
-            reasons.append("ℹ️ May contain animal-derived ingredients — verify if suitable for vegetarians")
+            reasons.append(
+                f"⚠️ This product contains {found_str} — not suitable for your {diet} diet preference"
+            )
+
+    if diet == "vegan":
+        dairy_hits = [kw for kw in _ING["dairy_vegan"] if kw in text]
+        if dairy_hits:
+            found_str = " / ".join(sorted(set(dairy_hits))[:3])
+            levels.append(1)
+            reasons.append(
+                f"⚠️ This product contains {found_str} (dairy) — not suitable for your vegan diet preference"
+            )
 
     # ── Aggregate ────────────────────────────────────────────────────────────
     worst = max(levels) if levels else 0

@@ -16,7 +16,7 @@ export const profileApi = {
   },
 
   update: async (data: UserProfile): Promise<UserProfile> => {
-    const res = await api.post('/user/profile', data)
+    const res = await api.post('/user/profile', { ...data, user_id: data.id })
     return res.data.user
   },
 

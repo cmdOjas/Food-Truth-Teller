@@ -70,6 +70,12 @@ export default function ProfileSetupPage() {
     name: '', age: '', gender: '', weight: '',
     diseases: [], allergies: [], diet_type: 'non-vegetarian',
   })
+  const [noneDisease, setNoneDisease] = useState(false)
+  const [otherDiseaseChecked, setOtherDiseaseChecked] = useState(false)
+  const [otherDiseaseText, setOtherDiseaseText] = useState('')
+  const [noneAllergy, setNoneAllergy] = useState(false)
+  const [otherAllergyChecked, setOtherAllergyChecked] = useState(false)
+  const [otherAllergyText, setOtherAllergyText] = useState('')
 
   const update = (field: keyof FormData, value: string | string[]) =>
     setForm(f => ({ ...f, [field]: value }))
@@ -96,14 +102,18 @@ export default function ProfileSetupPage() {
   const handleSubmit = async () => {
     setSaving(true)
     setError('')
+    const finalDiseases = noneDisease ? [] : otherDiseaseChecked && otherDiseaseText.trim()
+      ? [...form.diseases, otherDiseaseText.trim()] : form.diseases
+    const finalAllergies = noneAllergy ? [] : otherAllergyChecked && otherAllergyText.trim()
+      ? [...form.allergies, otherAllergyText.trim()] : form.allergies
     try {
       const user = await profileApi.create({
         name: form.name.trim(),
         age: form.age ? parseInt(form.age) : undefined,
         gender: form.gender || undefined,
         weight: form.weight ? parseFloat(form.weight) : undefined,
-        diseases: form.diseases,
-        allergies: form.allergies,
+        diseases: finalDiseases,
+        allergies: finalAllergies,
         diet_type: form.diet_type as any,
       })
       localStorage.setItem('user_id', String(user.id))
@@ -279,19 +289,48 @@ export default function ProfileSetupPage() {
                   <p style={{ color: theme.textMuted, fontSize: 14, marginBottom: 20 }}>
                     Select any conditions you have, or skip if none apply.
                   </p>
+                  <CheckItem
+                    label="None"
+                    checked={noneDisease}
+                    onChange={checked => {
+                      setNoneDisease(checked)
+                      if (checked) {
+                        update('diseases', [])
+                        setOtherDiseaseChecked(false)
+                        setOtherDiseaseText('')
+                      }
+                    }}
+                    theme={theme}
+                  />
                   {DISEASES_OPTIONS.map(opt => (
                     <CheckItem
                       key={opt.value}
                       label={opt.label}
                       checked={form.diseases.includes(opt.value)}
-                      onChange={checked => toggleList('diseases', opt.value)}
+                      onChange={() => {
+                        setNoneDisease(false)
+                        toggleList('diseases', opt.value)
+                      }}
                       theme={theme}
                     />
                   ))}
-                  {form.diseases.length === 0 && (
-                    <p style={{ color: theme.textSubtle, fontSize: 13, marginTop: 8, textAlign: 'center' }}>
-                      No conditions selected (products will show general safety ratings)
-                    </p>
+                  <CheckItem
+                    label="Other"
+                    checked={otherDiseaseChecked}
+                    onChange={checked => {
+                      setOtherDiseaseChecked(checked)
+                      if (checked) setNoneDisease(false)
+                      if (!checked) setOtherDiseaseText('')
+                    }}
+                    theme={theme}
+                  />
+                  {otherDiseaseChecked && (
+                    <input
+                      value={otherDiseaseText}
+                      onChange={e => setOtherDiseaseText(e.target.value)}
+                      placeholder="Type your condition..."
+                      style={inputStyle}
+                    />
                   )}
                 </div>
               )}
@@ -305,15 +344,49 @@ export default function ProfileSetupPage() {
                   <p style={{ color: theme.textMuted, fontSize: 14, marginBottom: 20 }}>
                     We'll flag products containing your allergens immediately.
                   </p>
+                  <CheckItem
+                    label="None"
+                    checked={noneAllergy}
+                    onChange={checked => {
+                      setNoneAllergy(checked)
+                      if (checked) {
+                        update('allergies', [])
+                        setOtherAllergyChecked(false)
+                        setOtherAllergyText('')
+                      }
+                    }}
+                    theme={theme}
+                  />
                   {ALLERGIES_OPTIONS.map(opt => (
                     <CheckItem
                       key={opt.value}
                       label={opt.label}
                       checked={form.allergies.includes(opt.value)}
-                      onChange={() => toggleList('allergies', opt.value)}
+                      onChange={() => {
+                        setNoneAllergy(false)
+                        toggleList('allergies', opt.value)
+                      }}
                       theme={theme}
                     />
                   ))}
+                  <CheckItem
+                    label="Other"
+                    checked={otherAllergyChecked}
+                    onChange={checked => {
+                      setOtherAllergyChecked(checked)
+                      if (checked) setNoneAllergy(false)
+                      if (!checked) setOtherAllergyText('')
+                    }}
+                    theme={theme}
+                  />
+                  {otherAllergyChecked && (
+                    <input
+                      value={otherAllergyText}
+                      onChange={e => setOtherAllergyText(e.target.value)}
+                      placeholder="Type your allergy..."
+                      style={inputStyle}
+                    />
+                  )}
                 </div>
               )}
 

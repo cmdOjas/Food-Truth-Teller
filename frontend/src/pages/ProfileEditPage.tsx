@@ -48,6 +48,12 @@ export default function ProfileEditPage() {
     diseases: [] as string[], allergies: [] as string[],
     diet_type: 'non-vegetarian',
   })
+  const [noneDisease, setNoneDisease] = useState(false)
+  const [otherDiseaseChecked, setOtherDiseaseChecked] = useState(false)
+  const [otherDiseaseText, setOtherDiseaseText] = useState('')
+  const [noneAllergy, setNoneAllergy] = useState(false)
+  const [otherAllergyChecked, setOtherAllergyChecked] = useState(false)
+  const [otherAllergyText, setOtherAllergyText] = useState('')
 
   const userId = localStorage.getItem('user_id')
 
@@ -61,15 +67,31 @@ export default function ProfileEditPage() {
     if (!userId) { navigate('/profile-setup'); return }
     profileApi.get(parseInt(userId))
       .then(p => {
+        const stdDiseaseVals = DISEASES_OPTIONS.map(o => o.value)
+        const stdAllergyVals = ALLERGIES_OPTIONS.map(o => o.value)
+        const loadedDiseases = p.diseases || []
+        const loadedAllergies = p.allergies || []
+        const stdDiseases = loadedDiseases.filter(d => stdDiseaseVals.includes(d))
+        const otherDiseases = loadedDiseases.filter(d => !stdDiseaseVals.includes(d))
+        const stdAllergies = loadedAllergies.filter(a => stdAllergyVals.includes(a))
+        const otherAllergies = loadedAllergies.filter(a => !stdAllergyVals.includes(a))
         setForm({
           name: p.name || '',
           age: String(p.age || ''),
           gender: p.gender || '',
           weight: String(p.weight || ''),
-          diseases: p.diseases || [],
-          allergies: p.allergies || [],
+          diseases: stdDiseases,
+          allergies: stdAllergies,
           diet_type: p.diet_type || 'non-vegetarian',
         })
+        if (otherDiseases.length > 0) {
+          setOtherDiseaseChecked(true)
+          setOtherDiseaseText(otherDiseases.join(', '))
+        }
+        if (otherAllergies.length > 0) {
+          setOtherAllergyChecked(true)
+          setOtherAllergyText(otherAllergies.join(', '))
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -87,6 +109,10 @@ export default function ProfileEditPage() {
   const handleSave = async () => {
     if (!form.name.trim()) { setError('Name is required'); return }
     setSaving(true); setError('')
+    const finalDiseases = noneDisease ? [] : otherDiseaseChecked && otherDiseaseText.trim()
+      ? [...form.diseases, otherDiseaseText.trim()] : form.diseases
+    const finalAllergies = noneAllergy ? [] : otherAllergyChecked && otherAllergyText.trim()
+      ? [...form.allergies, otherAllergyText.trim()] : form.allergies
     try {
       await profileApi.update({
         id: parseInt(userId!),
@@ -94,8 +120,8 @@ export default function ProfileEditPage() {
         age: form.age ? parseInt(form.age) : undefined,
         gender: form.gender || undefined,
         weight: form.weight ? parseFloat(form.weight) : undefined,
-        diseases: form.diseases,
-        allergies: form.allergies,
+        diseases: finalDiseases,
+        allergies: finalAllergies,
         diet_type: form.diet_type as any,
       })
       localStorage.setItem('user_name', form.name.trim())
@@ -215,17 +241,97 @@ export default function ProfileEditPage() {
           {/* Health Conditions */}
           <div style={sectionStyle}>
             <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 14 }}>Health Conditions</h3>
+            <CheckItem
+              label="None"
+              checked={noneDisease}
+              onChange={checked => {
+                setNoneDisease(checked)
+                if (checked) {
+                  update('diseases', [])
+                  setOtherDiseaseChecked(false)
+                  setOtherDiseaseText('')
+                }
+              }}
+              theme={theme}
+            />
             {DISEASES_OPTIONS.map(opt => (
-              <CheckItem key={opt.value} label={opt.label} checked={form.diseases.includes(opt.value)} onChange={() => toggleList('diseases', opt.value)} theme={theme} />
+              <CheckItem
+                key={opt.value}
+                label={opt.label}
+                checked={form.diseases.includes(opt.value)}
+                onChange={() => {
+                  setNoneDisease(false)
+                  toggleList('diseases', opt.value)
+                }}
+                theme={theme}
+              />
             ))}
+            <CheckItem
+              label="Other"
+              checked={otherDiseaseChecked}
+              onChange={checked => {
+                setOtherDiseaseChecked(checked)
+                if (checked) setNoneDisease(false)
+                if (!checked) setOtherDiseaseText('')
+              }}
+              theme={theme}
+            />
+            {otherDiseaseChecked && (
+              <input
+                value={otherDiseaseText}
+                onChange={e => setOtherDiseaseText(e.target.value)}
+                placeholder="Type your condition..."
+                style={inputStyle}
+              />
+            )}
           </div>
 
           {/* Allergies */}
           <div style={sectionStyle}>
             <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 14 }}>Food Allergies</h3>
+            <CheckItem
+              label="None"
+              checked={noneAllergy}
+              onChange={checked => {
+                setNoneAllergy(checked)
+                if (checked) {
+                  update('allergies', [])
+                  setOtherAllergyChecked(false)
+                  setOtherAllergyText('')
+                }
+              }}
+              theme={theme}
+            />
             {ALLERGIES_OPTIONS.map(opt => (
-              <CheckItem key={opt.value} label={opt.label} checked={form.allergies.includes(opt.value)} onChange={() => toggleList('allergies', opt.value)} theme={theme} />
+              <CheckItem
+                key={opt.value}
+                label={opt.label}
+                checked={form.allergies.includes(opt.value)}
+                onChange={() => {
+                  setNoneAllergy(false)
+                  toggleList('allergies', opt.value)
+                }}
+                theme={theme}
+              />
             ))}
+            <CheckItem
+              label="Other"
+              checked={otherAllergyChecked}
+              onChange={checked => {
+                setOtherAllergyChecked(checked)
+                if (checked) setNoneAllergy(false)
+                if (!checked) setOtherAllergyText('')
+              }}
+              theme={theme}
+            />
+            {otherAllergyChecked && (
+              <input
+                value={otherAllergyText}
+                onChange={e => setOtherAllergyText(e.target.value)}
+                placeholder="Type your allergy..."
+                style={inputStyle}
+              />
+            )}
           </div>
 
           {/* Diet */}

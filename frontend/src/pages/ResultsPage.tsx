@@ -96,6 +96,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showIngredients, setShowIngredients] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
 
   if (barcode === 'browse') return <ProductBrowse />
 
@@ -122,6 +123,29 @@ export default function ResultsPage() {
       })
       .finally(() => setLoading(false))
   }, [barcode])
+
+  useEffect(() => {
+    return () => { window.speechSynthesis?.cancel() }
+  }, [])
+
+  const toggleSpeak = (reasons: string[]) => {
+    if (speaking) {
+      window.speechSynthesis?.cancel()
+      setSpeaking(false)
+      return
+    }
+    if (!window.speechSynthesis) return
+    const text = reasons
+      .map(r => r.replace(/[^\x00-\x7F]/g, '').trim())
+      .filter(Boolean)
+      .join('. ')
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.onend = () => setSpeaking(false)
+    utter.onerror = () => setSpeaking(false)
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utter)
+    setSpeaking(true)
+  }
 
   if (loading) {
     return (
@@ -347,6 +371,19 @@ export default function ResultsPage() {
                 )
               })}
             </div>
+            {/* Voice button */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => toggleSpeak(reasons)}
+              style={{
+                marginTop: 14, padding: '9px 18px', borderRadius: 8, border: `1.5px solid ${theme.cardBorder}`,
+                background: speaking ? (theme.isDark ? '#1a4a28' : '#dcfce7') : theme.cardBg,
+                color: speaking ? theme.green : theme.textMuted,
+                fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              {speaking ? '⏹ Stop' : '🔊 Hear Reason'}
+            </motion.button>
           </div>
 
           {/* Ingredients accordion */}
