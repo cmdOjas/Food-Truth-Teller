@@ -25,6 +25,11 @@ class BaseConfig:
     BCRYPT_LOG_ROUNDS = int(os.environ.get("BCRYPT_LOG_ROUNDS", 12))
     RATELIMIT_DEFAULT = os.environ.get("RATE_LIMIT_PER_MINUTE", "60") + " per minute"
     RATELIMIT_STORAGE_URI = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    # Ollama / AI configuration
+    OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "phi3:latest")
+    OLLAMA_TIMEOUT = int(os.environ.get("OLLAMA_TIMEOUT", 120))
+    ANALYSIS_CACHE_TTL_SECONDS = int(os.environ.get("ANALYSIS_CACHE_TTL_SECONDS", 3600))
 
 
 class DevelopmentConfig(BaseConfig):

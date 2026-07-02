@@ -31,12 +31,14 @@ def create_app(config_name: str = "development") -> Flask:
     from app.routes.product import product_bp
     from app.routes.chat import chat_bp
     from app.routes.scan import scan_bp
+    from app.routes.ai_analysis import ai_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(profile_bp, url_prefix="/api")
     app.register_blueprint(product_bp, url_prefix="/api")
     app.register_blueprint(chat_bp, url_prefix="/api")
     app.register_blueprint(scan_bp, url_prefix="/api")
+    app.register_blueprint(ai_bp, url_prefix="/api")
 
     _register_swagger(app)
 
