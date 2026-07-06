@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Leaf, ChevronRight, ChevronLeft, CheckCircle, User, Heart, AlertTriangle, Utensils } from 'lucide-react'
+import { Leaf, ChevronRight, ChevronLeft, CheckCircle, User, Heart, AlertTriangle, Utensils, Gauge } from 'lucide-react'
 import { profileApi } from '../services/api'
-import { DISEASES_OPTIONS, ALLERGIES_OPTIONS, DIET_OPTIONS } from '../types'
+import { DISEASES_OPTIONS, ALLERGIES_OPTIONS, DIET_OPTIONS, SENSITIVITY_OPTIONS } from '../types'
 import { useTheme } from '../context/ThemeContext'
 
 const STEPS = [
@@ -11,6 +11,7 @@ const STEPS = [
   { label: 'Conditions', icon: Heart },
   { label: 'Allergies', icon: AlertTriangle },
   { label: 'Diet Type', icon: Utensils },
+  { label: 'Sensitivity', icon: Gauge },
 ]
 
 interface FormData {
@@ -21,6 +22,7 @@ interface FormData {
   diseases: string[]
   allergies: string[]
   diet_type: string
+  sensitivity: string
 }
 
 function CheckItem({
@@ -69,6 +71,7 @@ export default function ProfileSetupPage() {
   const [form, setForm] = useState<FormData>({
     name: '', age: '', gender: '', weight: '',
     diseases: [], allergies: [], diet_type: 'non-vegetarian',
+    sensitivity: 'medium',
   })
   const [noneDisease, setNoneDisease] = useState(false)
   const [otherDiseaseChecked, setOtherDiseaseChecked] = useState(false)
@@ -115,6 +118,7 @@ export default function ProfileSetupPage() {
         diseases: finalDiseases,
         allergies: finalAllergies,
         diet_type: form.diet_type as any,
+        sensitivity: form.sensitivity as any,
       })
       localStorage.setItem('user_id', String(user.id))
       localStorage.setItem('user_name', user.name)
@@ -418,6 +422,46 @@ export default function ProfileSetupPage() {
                       {opt.label}
                     </motion.button>
                   ))}
+                </div>
+              )}
+
+              {/* Step 4: Sensitivity Level */}
+              {step === 4 && (
+                <div>
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.text, marginBottom: 8 }}>
+                    🎚️ Sensitivity Level
+                  </h2>
+                  <p style={{ color: theme.textMuted, fontSize: 14, marginBottom: 20 }}>
+                    Choose how early we should warn you about a product.
+                  </p>
+                  {SENSITIVITY_OPTIONS.map(opt => (
+                    <motion.button
+                      key={opt.value}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => update('sensitivity', opt.value)}
+                      style={{
+                        width: '100%', padding: '14px 16px', borderRadius: 12,
+                        marginBottom: 10, cursor: 'pointer', textAlign: 'left',
+                        border: `2px solid ${form.sensitivity === opt.value ? theme.green : theme.inputBorder}`,
+                        background: form.sensitivity === opt.value ? theme.greenBg : theme.inputBg,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <div style={{
+                        fontWeight: 700, fontSize: 15,
+                        color: form.sensitivity === opt.value ? theme.greenDark : theme.text,
+                        marginBottom: 4,
+                      }}>
+                        {opt.label}
+                      </div>
+                      <div style={{ fontSize: 13, color: theme.textMuted, lineHeight: 1.5 }}>
+                        {opt.description}
+                      </div>
+                    </motion.button>
+                  ))}
+                  <p style={{ fontSize: 12, color: theme.textSubtle, marginTop: 12, lineHeight: 1.5, fontStyle: 'italic' }}>
+                    This changes how early we warn you — not the official health limits themselves.
+                  </p>
                 </div>
               )}
             </motion.div>

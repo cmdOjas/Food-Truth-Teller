@@ -261,6 +261,7 @@ def init_db():
             diseases    TEXT DEFAULT '[]',
             allergies   TEXT DEFAULT '[]',
             diet_type   TEXT DEFAULT 'non-vegetarian',
+            sensitivity TEXT DEFAULT 'medium',
             created_at  TEXT DEFAULT (datetime('now'))
         );
 
@@ -280,6 +281,13 @@ def init_db():
         );
     """)
     conn.commit()
+
+    # Migration: add sensitivity column for DBs created before this feature
+    user_cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+    if "sensitivity" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN sensitivity TEXT DEFAULT 'medium'")
+        conn.commit()
+        print("[DB] Migrated: added sensitivity column to users table")
 
     # Seed products if empty
     cur = conn.execute("SELECT COUNT(*) FROM products")
@@ -360,6 +368,18 @@ _SODIUM = {
     "kidney":       {"caution": 200.0, "avoid":  400.0},
 }
 
+# ─────────────────────────────────────────────
+# Sensitivity Level — scales the caution/avoid thresholds ABOVE at
+# comparison time only. It does not change the official nutrient data
+# or create separate threshold tables, and it never applies to
+# zero-tolerance checks (gluten/celiac, allergies) which always avoid.
+#   low    (~1.3x) : warn later  — informational, fewer warnings
+#   medium (1.0x)  : official thresholds — existing default behaviour
+#   high   (~0.7x) : warn earlier — extra safety margin
+# ─────────────────────────────────────────────
+_SENSITIVITY_MULTIPLIER = {"low": 1.3, "medium": 1.0, "high": 0.7}
+_SENSITIVITY_LABEL      = {"low": "Low", "medium": "Medium", "high": "High"}
+
 
 # ─────────────────────────────────────────────
 # Unified threshold-based rating engine
@@ -382,6 +402,12 @@ def rate_product(product_data: dict, profile: dict) -> tuple:
     diseases  = [d.lower() for d in (profile.get("diseases")  or [])]
     allergies = [a.lower() for a in (profile.get("allergies") or [])]
     diet      = (profile.get("diet_type") or "non-vegetarian").lower()
+
+    sensitivity = (profile.get("sensitivity") or "medium").lower()
+    if sensitivity not in _SENSITIVITY_MULTIPLIER:
+        sensitivity = "medium"
+    sens_mult  = _SENSITIVITY_MULTIPLIER[sensitivity]
+    sens_label = _SENSITIVITY_LABEL[sensitivity]
 
     def has_d(*keys): return any(k in d for k in keys for d in diseases)
     def has_a(*keys): return any(k in a for k in keys for a in allergies)
@@ -423,45 +449,85 @@ def rate_product(product_data: dict, profile: dict) -> tuple:
         levels.append(2)
         reasons.append("🚫 Contains eggs — you have an egg allergy")
 
-    # ── 6. Sugar — quantity-based (g / 100 g) ───────────────────────────────
-    is_diabetic    = has_d("diabetes")
-    sugar_thresh   = _SUGAR["diabetes"] if is_diabetic else _SUGAR["default"]
+    # ── 6. Sugar — quantity-based (g / 100 g), scaled by sensitivity ────────
+    is_diabetic     = has_d("diabetes")
+    base_sugar      = _SUGAR["diabetes"] if is_diabetic else _SUGAR["default"]
     condition_label = "diabetes" if is_diabetic else "general"
+    sugar_caution   = base_sugar["caution"] * sens_mult
+    sugar_avoid     = base_sugar["avoid"] * sens_mult
 
-    if sugar_g >= sugar_thresh["avoid"]:
+    if sugar_g >= sugar_avoid:
         levels.append(2)
-        reasons.append(
-            f"🚫 Very high sugar ({sugar_g:.1f} g/100 g) — exceeds {condition_label} avoid threshold "
-            f"({sugar_thresh['avoid']:.0f} g/100 g)"
-        )
-    elif sugar_g >= sugar_thresh["caution"]:
+        if sensitivity == "medium":
+            reasons.append(
+                f"🚫 Very high sugar ({sugar_g:.1f} g/100 g) — exceeds {condition_label} avoid threshold "
+                f"({sugar_avoid:.1f} g/100 g)"
+            )
+        else:
+            reasons.append(
+                f"🚫 Very high sugar ({sugar_g:.1f} g/100 g) — exceeds your {sens_label}-sensitivity avoid "
+                f"limit of {sugar_avoid:.1f} g/100 g (official {condition_label} limit: {base_sugar['avoid']:.0f} g/100 g)"
+            )
+    elif sugar_g >= sugar_caution:
         levels.append(1)
+        if sensitivity == "medium":
+            reasons.append(
+                f"⚠️ Elevated sugar ({sugar_g:.1f} g/100 g) — above {condition_label} caution threshold "
+                f"({sugar_caution:.1f} g/100 g)"
+            )
+        else:
+            reasons.append(
+                f"⚠️ Elevated sugar ({sugar_g:.1f} g/100 g) — above your {sens_label}-sensitivity caution "
+                f"limit of {sugar_caution:.1f} g/100 g (official {condition_label} limit: {base_sugar['caution']:.0f} g/100 g)"
+            )
+    elif sensitivity == "low" and sugar_g >= base_sugar["caution"]:
+        # Low sensitivity: under the relaxed limit but at/above the official limit —
+        # neutral awareness note only. Does not change the rating.
         reasons.append(
-            f"⚠️ Elevated sugar ({sugar_g:.1f} g/100 g) — above {condition_label} caution threshold "
-            f"({sugar_thresh['caution']:.0f} g/100 g)"
+            f"ℹ️ Contains {sugar_g:.1f} g sugar/100 g — official {condition_label} caution limit is "
+            f"{base_sugar['caution']:.0f} g/100 g. Your Low sensitivity setting keeps this informational."
         )
 
-    # ── 7. Sodium — quantity-based (mg / 100 g) ─────────────────────────────
+    # ── 7. Sodium — quantity-based (mg / 100 g), scaled by sensitivity ──────
     is_hypertensive = has_d("bp", "blood pressure", "hypertension")
     has_kidney      = has_d("kidney")
     if is_hypertensive or has_kidney:
-        sodium_thresh  = _SODIUM["kidney"] if has_kidney else _SODIUM["hypertension"]
-        sodium_label   = "kidney disease" if has_kidney else "hypertension"
+        base_sodium  = _SODIUM["kidney"] if has_kidney else _SODIUM["hypertension"]
+        sodium_label = "kidney disease" if has_kidney else "hypertension"
     else:
-        sodium_thresh  = _SODIUM["default"]
-        sodium_label   = "general"
+        base_sodium  = _SODIUM["default"]
+        sodium_label = "general"
+    sodium_caution = base_sodium["caution"] * sens_mult
+    sodium_avoid   = base_sodium["avoid"] * sens_mult
 
-    if sodium_mg >= sodium_thresh["avoid"]:
+    if sodium_mg >= sodium_avoid:
         levels.append(2)
-        reasons.append(
-            f"🚫 Very high sodium ({sodium_mg:.0f} mg/100 g) — exceeds {sodium_label} avoid threshold "
-            f"({sodium_thresh['avoid']:.0f} mg/100 g)"
-        )
-    elif sodium_mg >= sodium_thresh["caution"]:
+        if sensitivity == "medium":
+            reasons.append(
+                f"🚫 Very high sodium ({sodium_mg:.0f} mg/100 g) — exceeds {sodium_label} avoid threshold "
+                f"({sodium_avoid:.0f} mg/100 g)"
+            )
+        else:
+            reasons.append(
+                f"🚫 Very high sodium ({sodium_mg:.0f} mg/100 g) — exceeds your {sens_label}-sensitivity avoid "
+                f"limit of {sodium_avoid:.0f} mg/100 g (official {sodium_label} limit: {base_sodium['avoid']:.0f} mg/100 g)"
+            )
+    elif sodium_mg >= sodium_caution:
         levels.append(1)
+        if sensitivity == "medium":
+            reasons.append(
+                f"⚠️ High sodium ({sodium_mg:.0f} mg/100 g) — above {sodium_label} caution threshold "
+                f"({sodium_caution:.0f} mg/100 g)"
+            )
+        else:
+            reasons.append(
+                f"⚠️ High sodium ({sodium_mg:.0f} mg/100 g) — above your {sens_label}-sensitivity caution "
+                f"limit of {sodium_caution:.0f} mg/100 g (official {sodium_label} limit: {base_sodium['caution']:.0f} mg/100 g)"
+            )
+    elif sensitivity == "low" and sodium_mg >= base_sodium["caution"]:
         reasons.append(
-            f"⚠️ High sodium ({sodium_mg:.0f} mg/100 g) — above {sodium_label} caution threshold "
-            f"({sodium_thresh['caution']:.0f} mg/100 g)"
+            f"ℹ️ Contains {sodium_mg:.0f} mg sodium/100 g — official {sodium_label} caution limit is "
+            f"{base_sodium['caution']:.0f} mg/100 g. Your Low sensitivity setting keeps this informational."
         )
 
     # ── 8. Trans fat — presence-based (no safe threshold per FDA) ───────────
@@ -530,10 +596,11 @@ def rate_product(product_data: dict, profile: dict) -> tuple:
         rating      = "safe"
         confidence  = 0.90
         proba       = [0.90, 0.07, 0.03]
+        info_notes  = [r for r in reasons if r.startswith("ℹ️")]
         reasons     = [
             "✅ All nutrient levels within safe thresholds for your health profile",
             "No allergens, zero-tolerance ingredients, or excessive sugar / sodium detected",
-        ]
+        ] + info_notes
 
     return rating, confidence, proba, reasons
 
@@ -591,23 +658,27 @@ def create_or_update_profile():
     diseases  = json.dumps(data.get("diseases", []))
     allergies = json.dumps(data.get("allergies", []))
 
+    sensitivity = (data.get("sensitivity") or "medium").lower()
+    if sensitivity not in ("low", "medium", "high"):
+        sensitivity = "medium"
+
     user_id = data.get("user_id")
     conn = get_db()
     if user_id:
         conn.execute(
-            """UPDATE users SET name=?,age=?,gender=?,weight=?,diseases=?,allergies=?,diet_type=?
+            """UPDATE users SET name=?,age=?,gender=?,weight=?,diseases=?,allergies=?,diet_type=?,sensitivity=?
                WHERE id=?""",
             (name, data.get("age"), data.get("gender"), data.get("weight"),
-             diseases, allergies, data.get("diet_type", "non-vegetarian"), user_id),
+             diseases, allergies, data.get("diet_type", "non-vegetarian"), sensitivity, user_id),
         )
         conn.commit()
         row = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
     else:
         cur = conn.execute(
-            """INSERT INTO users (name,age,gender,weight,diseases,allergies,diet_type)
-               VALUES (?,?,?,?,?,?,?)""",
+            """INSERT INTO users (name,age,gender,weight,diseases,allergies,diet_type,sensitivity)
+               VALUES (?,?,?,?,?,?,?,?)""",
             (name, data.get("age"), data.get("gender"), data.get("weight"),
-             diseases, allergies, data.get("diet_type", "non-vegetarian")),
+             diseases, allergies, data.get("diet_type", "non-vegetarian"), sensitivity),
         )
         conn.commit()
         row = conn.execute("SELECT * FROM users WHERE id=?", (cur.lastrowid,)).fetchone()

@@ -1,3 +1,5 @@
+export type SensitivityLevel = 'low' | 'medium' | 'high'
+
 export interface UserProfile {
   id: number
   name: string
@@ -7,6 +9,7 @@ export interface UserProfile {
   diseases: string[]
   allergies: string[]
   diet_type: 'vegetarian' | 'non-vegetarian' | 'vegan'
+  sensitivity: SensitivityLevel
   created_at?: string
 }
 
@@ -68,4 +71,22 @@ export const DIET_OPTIONS = [
   { value: 'non-vegetarian', label: 'Non-Vegetarian' },
   { value: 'vegetarian', label: 'Vegetarian' },
   { value: 'vegan', label: 'Vegan' },
+]
+
+export const SENSITIVITY_OPTIONS: { value: SensitivityLevel; label: string; description: string }[] = [
+  {
+    value: 'low',
+    label: 'Low',
+    description: 'Only warns when a product clearly goes well past the health limit. Good if you just want general awareness, not frequent alerts.',
+  },
+  {
+    value: 'medium',
+    label: 'Medium',
+    description: 'Warns right at the official health limit. Balanced for most people. (Recommended default)',
+  },
+  {
+    value: 'high',
+    label: 'High',
+    description: 'Warns earlier, before the official limit is reached — extra safety margin for serious or hard-to-control conditions.',
+  },
 ]

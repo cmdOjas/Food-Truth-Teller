@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Save, LogOut, CheckCircle, User } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { profileApi } from '../services/api'
-import { DISEASES_OPTIONS, ALLERGIES_OPTIONS, DIET_OPTIONS } from '../types'
+import { DISEASES_OPTIONS, ALLERGIES_OPTIONS, DIET_OPTIONS, SENSITIVITY_OPTIONS } from '../types'
 import { useTheme } from '../context/ThemeContext'
 
 function CheckItem({ label, checked, onChange, theme }: {
@@ -47,6 +47,7 @@ export default function ProfileEditPage() {
     name: '', age: '', gender: '', weight: '',
     diseases: [] as string[], allergies: [] as string[],
     diet_type: 'non-vegetarian',
+    sensitivity: 'medium',
   })
   const [noneDisease, setNoneDisease] = useState(false)
   const [otherDiseaseChecked, setOtherDiseaseChecked] = useState(false)
@@ -83,6 +84,7 @@ export default function ProfileEditPage() {
           diseases: stdDiseases,
           allergies: stdAllergies,
           diet_type: p.diet_type || 'non-vegetarian',
+          sensitivity: p.sensitivity || 'medium',
         })
         if (otherDiseases.length > 0) {
           setOtherDiseaseChecked(true)
@@ -123,6 +125,7 @@ export default function ProfileEditPage() {
         diseases: finalDiseases,
         allergies: finalAllergies,
         diet_type: form.diet_type as any,
+        sensitivity: form.sensitivity as any,
       })
       localStorage.setItem('user_name', form.name.trim())
       setSaved(true)
@@ -349,6 +352,34 @@ export default function ProfileEditPage() {
                 {opt.value === 'non-vegetarian' ? '🍗 ' : opt.value === 'vegetarian' ? '🌿 ' : '🌱 '}{opt.label}
               </motion.button>
             ))}
+          </div>
+
+          {/* Sensitivity Level */}
+          <div style={sectionStyle}>
+            <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 14 }}>Sensitivity Level</h3>
+            {SENSITIVITY_OPTIONS.map(opt => (
+              <motion.button key={opt.value} whileTap={{ scale: 0.97 }} onClick={() => update('sensitivity', opt.value)}
+                style={{
+                  width: '100%', padding: '14px 16px', borderRadius: 10, marginBottom: 8,
+                  cursor: 'pointer', textAlign: 'left',
+                  border: `2px solid ${form.sensitivity === opt.value ? theme.green : theme.inputBorder}`,
+                  background: form.sensitivity === opt.value ? theme.greenBg : theme.inputBg,
+                }}>
+                <div style={{
+                  fontWeight: 700, fontSize: 15,
+                  color: form.sensitivity === opt.value ? theme.greenDark : theme.text,
+                  marginBottom: 4,
+                }}>
+                  {opt.label}
+                </div>
+                <div style={{ fontSize: 13, color: theme.textMuted, lineHeight: 1.5 }}>
+                  {opt.description}
+                </div>
+              </motion.button>
+            ))}
+            <p style={{ fontSize: 12, color: theme.textSubtle, marginTop: 8, lineHeight: 1.5, fontStyle: 'italic' }}>
+              This changes how early we warn you — not the official health limits themselves.
+            </p>
           </div>
 
           {/* Save */}
