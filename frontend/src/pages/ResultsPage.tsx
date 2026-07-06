@@ -343,6 +343,9 @@ export default function ResultsPage() {
             border: `1px solid ${theme.cardBorder}`,
             marginBottom: 16,
           }}>
+            <p style={{ fontSize: 13, color: theme.textSubtle, marginBottom: 10, fontStyle: 'italic' }}>
+              According to your health profile, this is your result
+            </p>
             <h3 style={{ fontWeight: 700, fontSize: 17, color: theme.text, marginBottom: 14 }}>
               Why this rating?
             </h3>

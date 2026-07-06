@@ -47,6 +47,29 @@ const features = [
 
 const floatingIcons = ['🥦', '🍎', '🥕', '🍋', '🫐', '🌽', '🍇', '🥑']
 
+const extraFloatingEmojis = [
+  { e: '🍊', top: 8,  left: 3,  size: 1.6, dur: 12, delay: 0,   opacity: 0.22 },
+  { e: '🍓', top: 18, left: 22, size: 1.3, dur: 15, delay: 1.2, opacity: 0.18 },
+  { e: '🧅', top: 28, left: 78, size: 1.4, dur: 11, delay: 2.5, opacity: 0.20 },
+  { e: '🫑', top: 12, left: 55, size: 2.0, dur: 18, delay: 0.8, opacity: 0.25 },
+  { e: '🥬', top: 40, left: 92, size: 1.5, dur: 14, delay: 3.0, opacity: 0.17 },
+  { e: '🍑', top: 60, left: 10, size: 1.8, dur: 16, delay: 1.5, opacity: 0.22 },
+  { e: '🥝', top: 55, left: 38, size: 1.3, dur: 13, delay: 4.2, opacity: 0.19 },
+  { e: '🍅', top: 72, left: 68, size: 1.6, dur: 17, delay: 0.5, opacity: 0.21 },
+  { e: '🫐', top: 82, left: 85, size: 1.4, dur: 10, delay: 2.0, opacity: 0.24 },
+  { e: '🥭', top: 90, left: 28, size: 2.2, dur: 19, delay: 3.8, opacity: 0.16 },
+  { e: '🍍', top: 5,  left: 42, size: 1.5, dur: 14, delay: 6.0, opacity: 0.20 },
+  { e: '🥚', top: 35, left: 63, size: 1.2, dur: 11, delay: 1.0, opacity: 0.18 },
+  { e: '🧂', top: 48, left: 5,  size: 1.3, dur: 16, delay: 4.5, opacity: 0.15 },
+  { e: '🍞', top: 65, left: 50, size: 1.8, dur: 13, delay: 2.8, opacity: 0.22 },
+  { e: '🧀', top: 78, left: 15, size: 1.4, dur: 20, delay: 7.0, opacity: 0.17 },
+  { e: '🥪', top: 22, left: 88, size: 1.6, dur: 15, delay: 5.5, opacity: 0.19 },
+  { e: '🌮', top: 50, left: 72, size: 2.0, dur: 12, delay: 3.3, opacity: 0.23 },
+  { e: '🍫', top: 88, left: 55, size: 1.5, dur: 18, delay: 0.3, opacity: 0.20 },
+  { e: '🍬', top: 15, left: 68, size: 1.2, dur: 10, delay: 8.0, opacity: 0.16 },
+  { e: '🥛', top: 70, left: 95, size: 1.7, dur: 14, delay: 1.8, opacity: 0.21 },
+]
+
 export default function LandingPage() {
   const navigate = useNavigate()
   const hasProfile = !!localStorage.getItem('user_id')
@@ -87,6 +110,32 @@ export default function LandingPage() {
             }}
           >
             {icon}
+          </motion.div>
+        ))}
+
+        {/* Extra floating food emojis */}
+        {extraFloatingEmojis.map((item, i) => (
+          <motion.div
+            key={`extra-${i}`}
+            initial={{ opacity: 0, y: 0 }}
+            animate={{
+              opacity: [item.opacity * 0.6, item.opacity, item.opacity * 0.6],
+              y: [0, -18, 0],
+              x: [0, i % 2 === 0 ? 8 : -8, 0],
+            }}
+            transition={{ duration: item.dur, repeat: Infinity, delay: item.delay, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute',
+              fontSize: `${item.size}rem`,
+              top: `${item.top}%`,
+              left: `${item.left}%`,
+              filter: 'blur(0.3px)',
+              pointerEvents: 'none',
+              zIndex: 0,
+              userSelect: 'none',
+            }}
+          >
+            {item.e}
           </motion.div>
         ))}
 
