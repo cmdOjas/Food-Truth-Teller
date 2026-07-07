@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { UserProfile, Product, AnalysisResult } from '../types'
+import type { UserProfile, Product, AnalysisResult, ChatMessage } from '../types'
 
 const API_BASE = (import.meta as any).env?.VITE_API_URL || '/api'
 
@@ -50,9 +50,29 @@ export const chatApi = {
     const res = await api.post('/chat', {
       user_id: userId,
       message,
-      product_barcode: productBarcode,
+      barcode: productBarcode,
+      product_barcode: productBarcode, // backward-compatible key
     })
-    return res.data.response
+    return res.data.reply ?? res.data.response
+  },
+
+  history: async (userId: number, productBarcode?: string): Promise<ChatMessage[]> => {
+    const res = await api.get('/chat/history', {
+      params: { user_id: userId, barcode: productBarcode || 'general' },
+    })
+    return (res.data.messages || []).map((m: any) => ({
+      id: String(m.id),
+      role: m.role === 'bot' ? 'bot' : 'user',
+      content: m.content,
+      timestamp: m.timestamp,
+    })) as ChatMessage[]
+  },
+
+  clear: async (userId: number, productBarcode?: string): Promise<void> => {
+    await api.post('/chat/clear', {
+      user_id: userId,
+      barcode: productBarcode || 'general',
+    })
   },
 }
 

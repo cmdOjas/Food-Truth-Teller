@@ -1,23 +1,43 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Bot, User, Leaf } from 'lucide-react'
+import { Send, Bot, User, Leaf, Trash2 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { chatApi } from '../services/api'
 import { useTheme } from '../context/ThemeContext'
 import type { ChatMessage } from '../types'
 
-const SUGGESTED = [
+// Product-aware prompts (used when opened from a scan result)
+const SUGGESTED_PRODUCT = [
+  'Can I eat this?',
+  'Is it high in sugar?',
+  'Does it contain gluten?',
+  'Is it vegan?',
+  'Suggest a healthier alternative',
+  'Explain the ingredients',
+]
+
+// General prompts (used for standalone chat)
+const SUGGESTED_GENERAL = [
   'What should I avoid with diabetes?',
   'Tell me about my allergies',
-  'Is this product safe for me?',
   'What are heart-healthy foods?',
   'How much sugar is too much?',
   'What hidden gluten sources should I know?',
 ]
 
+// Backend timestamps are UTC ISO strings (no tz suffix); render as local HH:MM.
+function formatTime(ts: string): string {
+  if (!ts) return ''
+  const iso = /[zZ]|[+-]\d\d:?\d\d$/.test(ts) ? ts : ts + 'Z'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
 function MessageBubble({ msg, theme }: { msg: ChatMessage; theme: ReturnType<typeof useTheme>['theme'] }) {
   const isUser = msg.role === 'user'
+  const time = formatTime(msg.timestamp)
   return (
     <motion.div
       initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -38,25 +58,34 @@ function MessageBubble({ msg, theme }: { msg: ChatMessage; theme: ReturnType<typ
         {isUser ? <User size={16} color="white" /> : <Leaf size={16} color="white" />}
       </div>
 
-      {/* Bubble */}
+      {/* Bubble + timestamp */}
       <div style={{
-        maxWidth: '75%',
-        background: isUser
-          ? 'linear-gradient(135deg, #22c55e, #16a34a)'
-          : theme.cardBg,
-        color: isUser ? 'white' : theme.text,
-        padding: '12px 16px', borderRadius: isUser ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
-        boxShadow: theme.isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.08)',
-        border: isUser ? 'none' : `1px solid ${theme.cardBorder}`,
-        fontSize: 14, lineHeight: 1.7,
-        whiteSpace: 'pre-line',
+        display: 'flex', flexDirection: 'column',
+        alignItems: isUser ? 'flex-end' : 'flex-start', maxWidth: '75%',
       }}>
-        {msg.content.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
-          part.startsWith('**') && part.endsWith('**') ? (
-            <strong key={i}>{part.slice(2, -2)}</strong>
-          ) : (
-            <span key={i}>{part}</span>
-          )
+        <div style={{
+          background: isUser
+            ? 'linear-gradient(135deg, #22c55e, #16a34a)'
+            : theme.cardBg,
+          color: isUser ? 'white' : theme.text,
+          padding: '12px 16px', borderRadius: isUser ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
+          boxShadow: theme.isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.08)',
+          border: isUser ? 'none' : `1px solid ${theme.cardBorder}`,
+          fontSize: 14, lineHeight: 1.7,
+          whiteSpace: 'pre-line',
+        }}>
+          {msg.content.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+            part.startsWith('**') && part.endsWith('**') ? (
+              <strong key={i}>{part.slice(2, -2)}</strong>
+            ) : (
+              <span key={i}>{part}</span>
+            )
+          )}
+        </div>
+        {time && (
+          <span style={{ fontSize: 11, color: theme.textSubtle, margin: '4px 6px 0' }}>
+            {time}
+          </span>
         )}
       </div>
     </motion.div>
@@ -103,20 +132,42 @@ export default function ChatPage() {
   const userId = parseInt(localStorage.getItem('user_id') || '0')
   const userName = localStorage.getItem('user_name') || 'there'
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '0', role: 'bot', timestamp: new Date().toISOString(),
-      content: `Hello ${userName}! 🌿 I'm your EatWise AI assistant.\n\nI can help you understand how different foods affect your health, explain ingredients, and answer questions about your profile.\n\nWhat would you like to know?`,
-    },
-  ])
+  const welcome: ChatMessage = {
+    id: '0', role: 'bot', timestamp: new Date().toISOString(),
+    content: productBarcode
+      ? `Hello ${userName}! 🌿 I'm your EatWise AI assistant. I've loaded the product you just scanned — ask me anything about it, like "Can I eat this?" or "Is it high in sugar?".`
+      : `Hello ${userName}! 🌿 I'm your EatWise AI assistant.\n\nI can help you understand how different foods affect your health, explain ingredients, and answer questions about your profile.\n\nWhat would you like to know?`,
+  }
+
+  const [messages, setMessages] = useState<ChatMessage[]>([welcome])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const SUGGESTED = productBarcode ? SUGGESTED_PRODUCT : SUGGESTED_GENERAL
+
+  // Load persisted conversation for this product (or general chat) on mount
+  useEffect(() => {
+    if (!userId) return
+    chatApi.history(userId, productBarcode)
+      .then(history => {
+        if (history.length > 0) setMessages(history)
+      })
+      .catch(() => { /* keep welcome message on failure */ })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productBarcode])
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  const clearConversation = async () => {
+    try {
+      await chatApi.clear(userId, productBarcode)
+    } catch { /* ignore network errors, still reset locally */ }
+    setMessages([{ ...welcome, timestamp: new Date().toISOString() }])
+  }
 
   const sendMessage = async (text: string) => {
     const msg = text.trim()
@@ -177,15 +228,30 @@ export default function ChatPage() {
               Online · Personalized to your profile
             </div>
           </div>
-          {productBarcode && (
-            <div style={{
-              marginLeft: 'auto', background: theme.greenBg, color: theme.greenDark,
-              padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600,
-              border: `1px solid ${theme.isDark ? '#1a4a28' : 'transparent'}`,
-            }}>
-              Product: {productBarcode}
-            </div>
-          )}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            {productBarcode && (
+              <div style={{
+                background: theme.greenBg, color: theme.greenDark,
+                padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+                border: `1px solid ${theme.isDark ? '#1a4a28' : 'transparent'}`,
+              }}>
+                Product: {productBarcode}
+              </div>
+            )}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={clearConversation}
+              title="Clear conversation"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '6px 10px', borderRadius: 8, cursor: 'pointer',
+                border: `1px solid ${theme.cardBorder}`, background: theme.inputBg,
+                color: theme.textMuted, fontSize: 12, fontWeight: 600,
+              }}
+            >
+              <Trash2 size={14} /> Clear
+            </motion.button>
+          </div>
         </div>
 
         {/* Messages */}

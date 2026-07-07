@@ -16,6 +16,10 @@ import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+# Offline nutrition chatbot engine (no LLM / no external API)
+from chatbot import engine as chat_engine
+from chatbot import memory as chat_memory
+
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
@@ -279,6 +283,20 @@ def init_db():
             image_url       TEXT,
             created_at      TEXT DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id     INTEGER NOT NULL,
+            barcode     TEXT NOT NULL DEFAULT 'general',
+            role        TEXT NOT NULL,
+            content     TEXT NOT NULL,
+            intent      TEXT,
+            rating      TEXT,
+            created_at  TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_chat_user_barcode
+            ON chat_messages (user_id, barcode, id);
     """)
     conn.commit()
 
@@ -792,148 +810,138 @@ def analyze():
     }), 200
 
 
+# ─────────────────────────────────────────────
+# Chatbot helpers (offline hybrid engine)
+# ─────────────────────────────────────────────
+def _load_profile(conn, user_id):
+    """Fetch a user profile dict with parsed diseases/allergies, or None."""
+    user_row = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    if not user_row:
+        return None
+    profile = row_to_dict(user_row)
+    profile["diseases"]  = json.loads(profile["diseases"] or "[]")
+    profile["allergies"] = json.loads(profile["allergies"] or "[]")
+    return profile
+
+
+def _resolve_product(conn, barcode):
+    """Return a product dict for the given barcode (local DB, then OFF), or None."""
+    if not barcode or barcode == "general":
+        return None
+    row = conn.execute("SELECT * FROM products WHERE barcode=?", (barcode,)).fetchone()
+    if row:
+        return row_to_dict(row)
+    # Fall back to Open Food Facts (offline chatbot still works if this fails)
+    try:
+        return fetch_from_openfoodfacts(barcode)
+    except Exception:
+        return None
+
+
+def _candidate_products(conn, product):
+    """Same-category products used to suggest healthier alternatives."""
+    if not product:
+        return []
+    category = product.get("category")
+    if not category:
+        return []
+    rows = conn.execute(
+        "SELECT * FROM products WHERE category=? AND barcode!=?",
+        (category, product.get("barcode", "")),
+    ).fetchall()
+    return [row_to_dict(r) for r in rows]
+
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     data    = request.get_json(force=True) or {}
     user_id = data.get("user_id")
-    message = (data.get("message") or "").lower().strip()
-    product_barcode = data.get("product_barcode")
+    message = (data.get("message") or "").strip()
+    # Accept both `barcode` (spec) and `product_barcode` (existing frontend)
+    barcode = data.get("barcode") or data.get("product_barcode")
 
     if not user_id:
-        return jsonify({"response": "Please set up your profile first to use the chatbot."}), 400
+        return jsonify({"reply": "Please set up your profile first to use the chatbot.",
+                        "response": "Please set up your profile first to use the chatbot."}), 400
+    if not message:
+        return jsonify({"reply": "Please type a question and I'll help.",
+                        "response": "Please type a question and I'll help."}), 400
 
     conn = get_db()
-    user_row = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
-    conn.close()
+    try:
+        profile = _load_profile(conn, user_id)
+        if not profile:
+            return jsonify({"reply": "Profile not found. Please create your profile first.",
+                            "response": "Profile not found. Please create your profile first."}), 404
 
-    if not user_row:
-        return jsonify({"response": "Profile not found. Please create your profile first."}), 404
+        product = _resolve_product(conn, barcode)
+        rating_result = rate_product(product, profile) if product else None
+        candidates = _candidate_products(conn, product)
+        history = chat_memory.load_history(conn, user_id, barcode)
 
-    profile = row_to_dict(user_row)
-    profile["diseases"]  = json.loads(profile["diseases"] or "[]")
-    profile["allergies"] = json.loads(profile["allergies"] or "[]")
+        # Persist the user's message, then generate + persist the reply
+        chat_memory.save_message(conn, user_id, barcode, "user", message)
 
-    name      = profile["name"]
-    diseases  = profile["diseases"]
-    allergies = profile["allergies"]
-    diet      = profile.get("diet_type", "non-vegetarian")
+        result = chat_engine.generate_reply(
+            message=message,
+            profile=profile,
+            product=product,
+            rating_result=rating_result,
+            history=history,
+            candidates=candidates,
+            rate_fn=rate_product,
+        )
 
-    # Pattern-based responses
-    response = _generate_chat_response(message, name, diseases, allergies, diet, product_barcode, profile)
-    return jsonify({"response": response, "timestamp": datetime.utcnow().isoformat()}), 200
-
-
-def _generate_chat_response(message, name, diseases, allergies, diet, product_barcode, profile):
-    # Greeting
-    if any(w in message for w in ["hello", "hi", "hey", "namaste"]):
-        cond_str = ", ".join(diseases) if diseases else "none"
-        return (f"Hello {name}! 👋 I'm your EatWise AI assistant.\n\n"
-                f"Your health conditions: **{cond_str}**\n"
-                f"Allergies: **{', '.join(allergies) if allergies else 'none'}**\n\n"
-                f"Scan a product or ask me anything about food and your health!")
-
-    # About scanned product
-    if product_barcode and any(w in message for w in ["safe", "eat", "okay", "ok", "good", "bad"]):
-        conn = get_db()
-        row = conn.execute("SELECT * FROM products WHERE barcode=?", (product_barcode,)).fetchone()
+        chat_memory.save_message(
+            conn, user_id, barcode, "bot", result["reply"],
+            intent=result.get("intent"), rating=result.get("rating"),
+        )
+    finally:
         conn.close()
-        if row:
-            product = row_to_dict(row)
-            rating, _, _, reasons = rate_product(product, profile)
-            reasons_str = "\n".join(f"• {r}" for r in reasons[:4])
-            emoji = {"safe": "✅", "caution": "⚠️", "avoid": "🚫"}.get(rating, "")
-            return (f"For **{product['product_name']}** — Rating: **{rating.upper()}** {emoji}\n\n"
-                    f"{reasons_str}")
 
-    # Diabetes
-    if "diabetes" in message or "sugar" in message:
-        if "diabetes" in diseases:
-            return ("As someone with **diabetes**, here's what to watch for:\n\n"
-                    "• 🚫 **Avoid**: products with sugar, high fructose corn syrup, dextrose, maltose\n"
-                    "• ✅ **Prefer**: whole grains, vegetables, lean proteins\n"
-                    "• ⚠️ Artificial sweeteners (sucralose, aspartame) are okay in moderation\n"
-                    "• Target < 5g sugar per 100g for most packaged foods")
-        return ("**Sugar tips for everyone:**\n\n"
-                "• The WHO recommends < 25g of free sugars per day\n"
-                "• Watch out for hidden sugars: corn syrup, dextrose, fructose, maltose\n"
-                "• Choose products with < 5g sugar per 100g when possible")
+    return jsonify({
+        "reply":     result["reply"],
+        "response":  result["reply"],          # backward-compatible key
+        "intent":    result.get("intent"),
+        "rating":    result.get("rating"),
+        "timestamp": datetime.utcnow().isoformat(),
+    }), 200
 
-    # Allergies
-    if "allerg" in message:
-        if allergies:
-            allergy_list = "\n".join(f"• **{a.title()}** — always check labels for derivatives" for a in allergies)
-            return (f"You have listed these allergies:\n\n{allergy_list}\n\n"
-                    "I scan for these in every product you check. For severe allergies, "
-                    "always verify the 'Contains' and 'May Contain' sections on labels.")
-        return ("No allergies in your profile. You can update your profile to add any allergies "
-                "and I'll flag them in every product scan.")
 
-    # Blood pressure
-    if any(w in message for w in ["blood pressure", "bp", "sodium", "salt", "hypertension"]):
-        if any(d in diseases for d in ["bp", "blood pressure", "hypertension"]):
-            return ("For **high blood pressure** management:\n\n"
-                    "• 🚫 Limit sodium to < 1500mg/day\n"
-                    "• Watch out for: processed foods, canned soups, pickles, soy sauce\n"
-                    "• ✅ Choose: fresh fruits, vegetables, whole grains, potassium-rich foods\n"
-                    "• Any product with > 600mg sodium per 100g is high-sodium")
-        return ("**Sodium guidelines:**\n\nThe WHO recommends < 2000mg sodium per day. "
-                "Aim for products with < 120mg sodium per 100g (low sodium).")
+@app.route("/api/chat/history", methods=["GET"])
+def chat_history():
+    """Return persisted chat history for (user_id, barcode)."""
+    user_id = request.args.get("user_id", type=int)
+    barcode = request.args.get("barcode")
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    conn = get_db()
+    try:
+        history = chat_memory.load_history(conn, user_id, barcode, limit=200)
+    finally:
+        conn.close()
+    # Map to the frontend ChatMessage shape
+    messages = [
+        {"id": h["id"], "role": h["role"], "content": h["content"], "timestamp": h["timestamp"]}
+        for h in history
+    ]
+    return jsonify({"messages": messages}), 200
 
-    # Heart / cardiovascular
-    if any(w in message for w in ["heart", "cholesterol", "cardiovascular"]):
-        return ("**Heart-healthy eating tips:**\n\n"
-                "• 🚫 Avoid trans fats (hydrogenated/partially hydrogenated oils)\n"
-                "• ⚠️ Limit saturated fat and processed meats\n"
-                "• ✅ Choose: olive oil, nuts, fish, whole grains, vegetables\n"
-                "• I flag products with trans fat as Avoid if you have heart conditions")
 
-    # Celiac / gluten
-    if any(w in message for w in ["celiac", "gluten", "wheat"]):
-        if "celiac" in diseases or "gluten" in allergies:
-            return ("For **celiac disease / gluten intolerance:**\n\n"
-                    "• 🚫 Strictly avoid: wheat, barley, rye, spelt, kamut, semolina\n"
-                    "• ⚠️ Watch for hidden gluten: malt, modified food starch, soy sauce\n"
-                    "• ✅ Safe grains: rice, quinoa, corn, oats (certified GF only)\n"
-                    "• I flag all gluten-containing products as Avoid for you")
-        return ("**Gluten info:**\n\nGluten is found in wheat, barley, and rye. "
-                "Only people with celiac disease or gluten sensitivity need to strictly avoid it.")
-
-    # Vegetarian / vegan
-    if any(w in message for w in ["vegetarian", "vegan", "meat", "animal"]):
-        if diet == "vegan":
-            return ("As a **vegan**, I flag:\n\n"
-                    "• 🚫 Gelatin (animal bones)\n• 🚫 Carmine (red dye from insects)\n"
-                    "• 🚫 Casein/whey (dairy proteins)\n• 🚫 Isinglass (fish)\n"
-                    "• 🚫 Lard/tallow (animal fat)\n\n"
-                    "Tip: Look for certified vegan labels for extra assurance!")
-        if diet == "vegetarian":
-            return ("As a **vegetarian**, watch for:\n\n"
-                    "• ⚠️ Gelatin (in marshmallows, gummy bears, jello)\n"
-                    "• ⚠️ Rennet in some cheeses\n"
-                    "• ⚠️ Carmine (E120) used as red coloring\n"
-                    "• ⚠️ Some omega-3 supplements derived from fish")
-
-    # Ingredients question
-    if "ingredient" in message or "what" in message:
-        return ("I analyze products for:\n\n"
-                "🍬 **High sugar** — harmful for diabetics\n"
-                "🧂 **High sodium** — harmful for BP/kidney patients\n"
-                "🌾 **Gluten** — harmful for celiac patients\n"
-                "🥛 **Dairy** — harmful for lactose intolerant\n"
-                "🥜 **Nuts** — flagged for nut allergy sufferers\n"
-                "🎨 **Artificial colors** — Red 40, Yellow 5/6\n"
-                "🧪 **Preservatives** — BHA, BHT, sodium benzoate\n"
-                "⚗️ **Trans fat** — harmful for heart patients\n\n"
-                "Scan a product to get your personalized rating!")
-
-    # Default
-    return (f"Hi {name}! 🌿 I'm here to help you make healthier food choices.\n\n"
-            "Try asking me:\n"
-            "• \"Is this product safe for me?\"\n"
-            "• \"What should I avoid with diabetes?\"\n"
-            "• \"Tell me about my allergies\"\n"
-            "• \"What are healthy alternatives?\"\n\n"
-            "Or scan a product barcode to get your personalized analysis!")
+@app.route("/api/chat/clear", methods=["POST", "DELETE"])
+def chat_clear():
+    """Clear the conversation for (user_id, barcode)."""
+    data    = request.get_json(silent=True) or {}
+    user_id = data.get("user_id") or request.args.get("user_id", type=int)
+    barcode = data.get("barcode") or request.args.get("barcode")
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    conn = get_db()
+    try:
+        removed = chat_memory.clear_history(conn, user_id, barcode)
+    finally:
+        conn.close()
+    return jsonify({"cleared": removed}), 200
 
 
 # ─────────────────────────────────────────────

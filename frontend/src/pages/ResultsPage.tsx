@@ -459,7 +459,7 @@ export default function ResultsPage() {
                 boxShadow: '0 4px 15px rgba(34,197,94,0.3)',
               }}
             >
-              <MessageSquare size={18} /> Ask AI
+              <MessageSquare size={18} /> Ask AI About This Product
             </motion.button>
           </div>
         </motion.div>
