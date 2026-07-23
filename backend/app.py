@@ -245,6 +245,36 @@ SEED_PRODUCTS = [
 
 
 # ─────────────────────────────────────────────
+# Extra per-100g nutrients for the seed products, used ONLY by the
+# Nutri-Score calculator. Keyed by barcode so this stays additive and does
+# not touch the existing SEED_PRODUCTS entries or any existing feature.
+#   (energy_kj, saturated_fat_g, fiber_g, protein_g, fruits_veg_percent)
+# ─────────────────────────────────────────────
+SEED_NUTRIENTS = {
+    "049000006346": {"energy_kj": 180.0,  "sat_fat": 0.0,  "fiber": 0.0,  "protein": 0.0,  "fruits_veg": 0.0},   # Coca-Cola
+    "028400050845": {"energy_kj": 2250.0, "sat_fat": 3.0,  "fiber": 4.0,  "protein": 6.5,  "fruits_veg": 0.0},   # Lay's Chips
+    "037466077260": {"energy_kj": 2050.0, "sat_fat": 5.0,  "fiber": 2.5,  "protein": 4.5,  "fruits_veg": 0.0},   # Oreo
+    "009800895452": {"energy_kj": 2250.0, "sat_fat": 12.0, "fiber": 3.5,  "protein": 6.0,  "fruits_veg": 13.0},  # Nutella
+    "034000002405": {"energy_kj": 2100.0, "sat_fat": 13.0, "fiber": 1.5,  "protein": 6.0,  "fruits_veg": 0.0},   # Kit Kat
+    "030000010112": {"energy_kj": 1560.0, "sat_fat": 1.3,  "fiber": 10.0, "protein": 13.0, "fruits_veg": 0.0},   # Quaker Oats
+    "038000191008": {"energy_kj": 1580.0, "sat_fat": 0.1,  "fiber": 3.0,  "protein": 7.0,  "fruits_veg": 0.0},   # Corn Flakes
+    "048500014468": {"energy_kj": 190.0,  "sat_fat": 0.0,  "fiber": 0.5,  "protein": 0.7,  "fruits_veg": 100.0}, # Tropicana OJ
+    "040000465713": {"energy_kj": 2000.0, "sat_fat": 9.0,  "fiber": 2.0,  "protein": 8.0,  "fruits_veg": 10.0},  # Snickers
+    "038000845598": {"energy_kj": 2100.0, "sat_fat": 9.0,  "fiber": 3.5,  "protein": 4.0,  "fruits_veg": 0.0},   # Pringles
+    "016000275591": {"energy_kj": 1900.0, "sat_fat": 1.5,  "fiber": 5.5,  "protein": 6.5,  "fruits_veg": 0.0},   # Nature Valley
+    "074684006085": {"energy_kj": 1200.0, "sat_fat": 18.0, "fiber": 0.0,  "protein": 5.0,  "fruits_veg": 0.0},   # Häagen-Dazs
+    "028400090513": {"energy_kj": 2150.0, "sat_fat": 4.5,  "fiber": 4.0,  "protein": 7.0,  "fruits_veg": 0.0},   # Doritos
+    "611269997124": {"energy_kj": 190.0,  "sat_fat": 0.0,  "fiber": 0.0,  "protein": 0.0,  "fruits_veg": 0.0},   # Red Bull
+    "040000002178": {"energy_kj": 2400.0, "sat_fat": 18.0, "fiber": 3.0,  "protein": 8.5,  "fruits_veg": 11.0},  # Kinder Bueno
+    "051000012631": {"energy_kj": 300.0,  "sat_fat": 0.5,  "fiber": 1.0,  "protein": 1.5,  "fruits_veg": 40.0},  # Campbell's Soup
+    "013000003536": {"energy_kj": 490.0,  "sat_fat": 0.1,  "fiber": 1.0,  "protein": 1.2,  "fruits_veg": 90.0},  # Heinz Ketchup
+    "021000014897": {"energy_kj": 1350.0, "sat_fat": 20.0, "fiber": 0.0,  "protein": 6.0,  "fruits_veg": 0.0},   # Philadelphia
+    "036632030375": {"energy_kj": 400.0,  "sat_fat": 1.0,  "fiber": 0.5,  "protein": 3.5,  "fruits_veg": 5.0},   # Activia
+    "016000394605": {"energy_kj": 850.0,  "sat_fat": 0.5,  "fiber": 40.0, "protein": 8.0,  "fruits_veg": 0.0},   # Fiber One
+}
+
+
+# ─────────────────────────────────────────────
 # Database helpers
 # ─────────────────────────────────────────────
 def get_db():
@@ -270,18 +300,23 @@ def init_db():
         );
 
         CREATE TABLE IF NOT EXISTS products (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            barcode         TEXT UNIQUE NOT NULL,
-            product_name    TEXT NOT NULL,
-            brand           TEXT,
-            ingredients     TEXT,
-            category        TEXT,
-            is_vegetarian   INTEGER DEFAULT 0,
-            is_vegan        INTEGER DEFAULT 0,
-            per_100g_sugar  REAL DEFAULT 0,
-            per_100g_sodium REAL DEFAULT 0,
-            image_url       TEXT,
-            created_at      TEXT DEFAULT (datetime('now'))
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            barcode            TEXT UNIQUE NOT NULL,
+            product_name       TEXT NOT NULL,
+            brand              TEXT,
+            ingredients        TEXT,
+            category           TEXT,
+            is_vegetarian      INTEGER DEFAULT 0,
+            is_vegan           INTEGER DEFAULT 0,
+            per_100g_sugar     REAL DEFAULT 0,
+            per_100g_sodium    REAL DEFAULT 0,
+            per_100g_energy_kj REAL DEFAULT 0,
+            per_100g_sat_fat   REAL DEFAULT 0,
+            per_100g_fiber     REAL DEFAULT 0,
+            per_100g_protein   REAL DEFAULT 0,
+            fruits_veg_percent REAL DEFAULT 0,
+            image_url          TEXT,
+            created_at         TEXT DEFAULT (datetime('now'))
         );
 
         CREATE TABLE IF NOT EXISTS chat_messages (
@@ -307,18 +342,47 @@ def init_db():
         conn.commit()
         print("[DB] Migrated: added sensitivity column to users table")
 
+    # Migration: add Nutri-Score nutrient columns for DBs created before this feature
+    product_cols = [r["name"] for r in conn.execute("PRAGMA table_info(products)").fetchall()]
+    _nutri_cols = [
+        "per_100g_energy_kj", "per_100g_sat_fat", "per_100g_fiber",
+        "per_100g_protein", "fruits_veg_percent",
+    ]
+    _added_nutri = False
+    for col in _nutri_cols:
+        if col not in product_cols:
+            conn.execute(f"ALTER TABLE products ADD COLUMN {col} REAL DEFAULT 0")
+            _added_nutri = True
+    if _added_nutri:
+        conn.commit()
+        # Backfill seed products with their known nutrient values
+        for barcode, n in SEED_NUTRIENTS.items():
+            conn.execute(
+                """UPDATE products SET per_100g_energy_kj=?, per_100g_sat_fat=?,
+                       per_100g_fiber=?, per_100g_protein=?, fruits_veg_percent=?
+                   WHERE barcode=?""",
+                (n["energy_kj"], n["sat_fat"], n["fiber"], n["protein"], n["fruits_veg"], barcode),
+            )
+        conn.commit()
+        print("[DB] Migrated: added Nutri-Score nutrient columns and backfilled seed products")
+
     # Seed products if empty
     cur = conn.execute("SELECT COUNT(*) FROM products")
     if cur.fetchone()[0] == 0:
         for p in SEED_PRODUCTS:
+            n = SEED_NUTRIENTS.get(p["barcode"], {})
             conn.execute(
                 """INSERT INTO products
                    (barcode,product_name,brand,ingredients,category,
-                    is_vegetarian,is_vegan,per_100g_sugar,per_100g_sodium,image_url)
-                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                    is_vegetarian,is_vegan,per_100g_sugar,per_100g_sodium,
+                    per_100g_energy_kj,per_100g_sat_fat,per_100g_fiber,
+                    per_100g_protein,fruits_veg_percent,image_url)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (p["barcode"], p["product_name"], p["brand"], p["ingredients"],
                  p["category"], p["is_vegetarian"], p["is_vegan"],
-                 p["per_100g_sugar"], p["per_100g_sodium"], p["image_url"]),
+                 p["per_100g_sugar"], p["per_100g_sodium"],
+                 n.get("energy_kj", 0), n.get("sat_fat", 0), n.get("fiber", 0),
+                 n.get("protein", 0), n.get("fruits_veg", 0), p["image_url"]),
             )
         conn.commit()
         print(f"[DB] Seeded {len(SEED_PRODUCTS)} products")
@@ -624,6 +688,213 @@ def rate_product(product_data: dict, profile: dict) -> tuple:
 
 
 # ─────────────────────────────────────────────
+# Nutri-Score (universal nutritional quality per 100 g)
+# Independent of the personalized Safe/Caution/Avoid engine above.
+# Official European A–E front-of-pack grading (simplified point tables).
+# ─────────────────────────────────────────────
+_BEVERAGE_KEYWORDS = ["beverage", "drink", "juice", "soda", "cola", "water",
+                      "tea", "coffee", "milk"]
+
+
+def _ns_num(value):
+    """Coerce a nutrient value to float; missing/None/blank/bad → 0.0."""
+    if value is None or value == "":
+        return 0.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _ns_points(value, bounds):
+    """Return the index of the first bound `value` is <= to; else len(bounds)."""
+    for i, b in enumerate(bounds):
+        if value <= b:
+            return i
+    return len(bounds)
+
+
+def _ns_fruits_points(pct):
+    if pct <= 40:
+        return 0
+    if pct <= 60:
+        return 2
+    if pct <= 80:
+        return 4
+    return 5
+
+
+def calculate_nutri_score(product_data):
+    """
+    Compute the Nutri-Score (A–E) for a product per 100 g / 100 ml.
+
+    Accepts either a flat product dict (local DB shape with per_100g_* fields)
+    or an Open Food Facts style dict containing a ``nutriments`` sub-dict.
+    Missing/None values are treated as 0 and never raise.
+    """
+    product_data = product_data or {}
+    nutriments = product_data.get("nutriments") or {}
+
+    def _present(off_keys, flat_keys):
+        for k in off_keys:
+            if k in nutriments and nutriments[k] not in (None, ""):
+                return True
+        for k in flat_keys:
+            if k in product_data and product_data[k] not in (None, ""):
+                return True
+        return False
+
+    def _value(off_keys, flat_keys):
+        for k in off_keys:
+            if k in nutriments and nutriments[k] not in (None, ""):
+                return _ns_num(nutriments[k])
+        for k in flat_keys:
+            if k in product_data and product_data[k] not in (None, ""):
+                return _ns_num(product_data[k])
+        return 0.0
+
+    # ── Step 1: extract nutrients (with completeness tracking) ──────────────
+    present_flags = []
+
+    # Energy (kJ) — prefer kJ, else convert kcal ×4.184
+    if _present(["energy-kj_100g", "energy_100g"], ["per_100g_energy_kj"]):
+        energy_kj = _value(["energy-kj_100g", "energy_100g"], ["per_100g_energy_kj"])
+        energy_present = True
+    elif _present(["energy-kcal_100g"], ["per_100g_energy_kcal"]):
+        energy_kj = _value(["energy-kcal_100g"], ["per_100g_energy_kcal"]) * 4.184
+        energy_present = True
+    else:
+        energy_kj, energy_present = 0.0, False
+    present_flags.append(energy_present)
+
+    sugars = _value(["sugars_100g"], ["per_100g_sugar"])
+    present_flags.append(_present(["sugars_100g"], ["per_100g_sugar"]))
+
+    sat_fat = _value(["saturated-fat_100g"], ["per_100g_sat_fat"])
+    present_flags.append(_present(["saturated-fat_100g"], ["per_100g_sat_fat"]))
+
+    # Sodium (mg) — OFF sodium_100g is in g (×1000); salt_100g in g (×400);
+    # flat per_100g_sodium is already in mg.
+    if _present(["sodium_100g"], []):
+        sodium_mg = _value(["sodium_100g"], []) * 1000
+        sodium_present = True
+    elif _present(["salt_100g"], []):
+        sodium_mg = _value(["salt_100g"], []) * 400
+        sodium_present = True
+    elif _present([], ["per_100g_sodium"]):
+        sodium_mg = _value([], ["per_100g_sodium"])
+        sodium_present = True
+    else:
+        sodium_mg, sodium_present = 0.0, False
+    present_flags.append(sodium_present)
+
+    fiber = _value(["fiber_100g"], ["per_100g_fiber"])
+    present_flags.append(_present(["fiber_100g"], ["per_100g_fiber"]))
+
+    proteins = _value(["proteins_100g"], ["per_100g_protein"])
+    present_flags.append(_present(["proteins_100g"], ["per_100g_protein"]))
+
+    fruits_veg = _value(
+        ["fruits-vegetables-nuts-estimate-from-ingredients_100g"],
+        ["fruits_veg_percent"],
+    )
+    present_flags.append(_present(
+        ["fruits-vegetables-nuts-estimate-from-ingredients_100g"],
+        ["fruits_veg_percent"],
+    ))
+
+    # ── Step 2: negative points (0–10 each, max 40) ─────────────────────────
+    energy_points = _ns_points(energy_kj, [335, 670, 1005, 1340, 1675,
+                                           2010, 2345, 2680, 3015, 3350])
+    sugars_points = _ns_points(sugars, [4.5, 9, 13.5, 18, 22.5, 27, 31, 36, 40, 45])
+    sat_fat_points = _ns_points(sat_fat, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    sodium_points = _ns_points(sodium_mg, [90, 180, 270, 360, 450,
+                                           540, 630, 720, 810, 900])
+    negative_points = energy_points + sugars_points + sat_fat_points + sodium_points
+
+    # ── Step 3: positive points (max 15) ────────────────────────────────────
+    fiber_points = _ns_points(fiber, [0.9, 1.9, 2.8, 3.7, 4.7])
+    protein_points = _ns_points(proteins, [1.6, 3.2, 4.8, 6.4, 8.0])
+    fruits_veg_points = _ns_fruits_points(fruits_veg)
+
+    # Official rule: if negatives are high and fruit/veg isn't maxed,
+    # protein points are NOT counted toward the positive score.
+    count_protein = not (negative_points >= 11 and fruits_veg_points < 5)
+    positive_points = fiber_points + fruits_veg_points + (protein_points if count_protein else 0)
+
+    # ── Step 4: final score & grade ─────────────────────────────────────────
+    final_score = negative_points - positive_points
+
+    category_str = (product_data.get("categories")
+                    or product_data.get("category") or "").lower()
+    name_str = (product_data.get("product_name")
+                or product_data.get("name") or "").lower()
+    haystack = f"{category_str} {name_str}"
+    # Whole-word match (allowing simple plurals) so e.g. "cola" does NOT match
+    # inside "chocolate" and "drink" still matches "drinks"/"juices".
+    def _kw_present(kw):
+        return re.search(r"\b" + re.escape(kw) + r"s?\b", haystack) is not None
+    is_beverage = any(_kw_present(kw) for kw in _BEVERAGE_KEYWORDS)
+    is_water = _kw_present("water")
+
+    if is_beverage:
+        if is_water:
+            grade = "A"
+        elif final_score <= 1:
+            grade = "B"
+        elif final_score <= 5:
+            grade = "C"
+        elif final_score <= 9:
+            grade = "D"
+        else:
+            grade = "E"
+    else:
+        if final_score <= -1:
+            grade = "A"
+        elif final_score <= 2:
+            grade = "B"
+        elif final_score <= 10:
+            grade = "C"
+        elif final_score <= 18:
+            grade = "D"
+        else:
+            grade = "E"
+
+    # ── Step 5: data completeness & return ──────────────────────────────────
+    missing = present_flags.count(False)
+    if missing == 0:
+        data_completeness = "full"
+    elif missing <= 3:
+        data_completeness = "partial"
+    else:
+        data_completeness = "minimal"
+
+    insufficient_data = False
+    if data_completeness == "minimal":
+        grade = "B"
+        insufficient_data = True
+
+    return {
+        "grade": grade,
+        "score": final_score,
+        "negative_points": negative_points,
+        "positive_points": positive_points,
+        "breakdown": {
+            "energy_points": energy_points,
+            "sugars_points": sugars_points,
+            "saturated_fat_points": sat_fat_points,
+            "sodium_points": sodium_points,
+            "fiber_points": fiber_points,
+            "protein_points": protein_points,
+            "fruits_veg_points": fruits_veg_points,
+        },
+        "is_beverage": is_beverage,
+        "data_completeness": data_completeness,
+        "insufficient_data": insufficient_data,
+    }
+
+
+# ─────────────────────────────────────────────
 # OpenFoodFacts fallback
 # ─────────────────────────────────────────────
 def fetch_from_openfoodfacts(barcode: str) -> dict | None:
@@ -638,16 +909,41 @@ def fetch_from_openfoodfacts(barcode: str) -> dict | None:
             return None
         p = data["product"]
         nutriments = p.get("nutriments", {})
+
+        # Energy in kJ: prefer energy-kj / energy, else convert from kcal
+        energy_kj = nutriments.get("energy-kj_100g")
+        if energy_kj in (None, ""):
+            energy_kj = nutriments.get("energy_100g")
+        if energy_kj in (None, ""):
+            kcal = nutriments.get("energy-kcal_100g")
+            energy_kj = float(kcal) * 4.184 if kcal not in (None, "") else 0
+
+        # Sodium in mg: prefer sodium (g→mg), else salt (g→mg via ×400)
+        if nutriments.get("sodium_100g") not in (None, ""):
+            sodium_mg = float(nutriments["sodium_100g"]) * 1000
+        elif nutriments.get("salt_100g") not in (None, ""):
+            sodium_mg = float(nutriments["salt_100g"]) * 400
+        else:
+            sodium_mg = 0.0
+
         result = {
             "barcode": barcode,
             "product_name": p.get("product_name") or p.get("product_name_en") or "Unknown Product",
             "brand": p.get("brands", "Unknown"),
             "ingredients": p.get("ingredients_text_en") or p.get("ingredients_text", ""),
             "category": p.get("categories", "").split(",")[0].strip() if p.get("categories") else "Other",
+            "categories": p.get("categories", "") or "",
             "is_vegetarian": int("en:vegetarian" in p.get("labels_tags", [])),
             "is_vegan": int("en:vegan" in p.get("labels_tags", [])),
             "per_100g_sugar": float(nutriments.get("sugars_100g") or 0),
-            "per_100g_sodium": float(nutriments.get("sodium_100g") or 0) * 1000,  # g→mg
+            "per_100g_sodium": sodium_mg,
+            "per_100g_energy_kj": float(energy_kj or 0),
+            "per_100g_sat_fat": float(nutriments.get("saturated-fat_100g") or 0),
+            "per_100g_fiber": float(nutriments.get("fiber_100g") or 0),
+            "per_100g_protein": float(nutriments.get("proteins_100g") or 0),
+            "fruits_veg_percent": float(
+                nutriments.get("fruits-vegetables-nuts-estimate-from-ingredients_100g") or 0
+            ),
             "image_url": p.get("image_front_url") or p.get("image_url", ""),
         }
         print(f"[OFF] Found: {result['product_name']} ({result['brand']})")
@@ -747,12 +1043,16 @@ def get_product(barcode):
     conn = get_db()
     conn.execute(
         """INSERT OR IGNORE INTO products
-           (barcode,product_name,brand,ingredients,category,is_vegetarian,is_vegan,per_100g_sugar,per_100g_sodium,image_url)
-           VALUES (?,?,?,?,?,?,?,?,?,?)""",
+           (barcode,product_name,brand,ingredients,category,is_vegetarian,is_vegan,
+            per_100g_sugar,per_100g_sodium,per_100g_energy_kj,per_100g_sat_fat,
+            per_100g_fiber,per_100g_protein,fruits_veg_percent,image_url)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (product_data["barcode"], product_data["product_name"], product_data["brand"],
          product_data["ingredients"], product_data["category"], product_data["is_vegetarian"],
          product_data["is_vegan"], product_data["per_100g_sugar"], product_data["per_100g_sodium"],
-         product_data["image_url"]),
+         product_data.get("per_100g_energy_kj", 0), product_data.get("per_100g_sat_fat", 0),
+         product_data.get("per_100g_fiber", 0), product_data.get("per_100g_protein", 0),
+         product_data.get("fruits_veg_percent", 0), product_data["image_url"]),
     )
     conn.commit()
     row = conn.execute("SELECT * FROM products WHERE barcode=?", (barcode,)).fetchone()
@@ -794,6 +1094,7 @@ def analyze():
     profile["allergies"] = json.loads(profile["allergies"] or "[]")
 
     rating, confidence, probabilities, reasons = rate_product(product_data, profile)
+    nutri_score = calculate_nutri_score(product_data)
 
     return jsonify({
         "rating":        rating,
@@ -803,10 +1104,11 @@ def analyze():
             "caution": round(probabilities[1], 3),
             "avoid":   round(probabilities[2], 3),
         },
-        "reasons":   reasons,
-        "product":   product_data,
-        "user_name": profile["name"],
-        "ml_used":   False,
+        "reasons":     reasons,
+        "product":     product_data,
+        "user_name":   profile["name"],
+        "ml_used":     False,
+        "nutri_score": nutri_score,
     }), 200
 
 

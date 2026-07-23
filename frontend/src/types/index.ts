@@ -29,6 +29,27 @@ export interface Product {
 
 export type Rating = 'safe' | 'caution' | 'avoid'
 
+export type NutriGrade = 'A' | 'B' | 'C' | 'D' | 'E'
+
+export interface NutriScore {
+  grade: NutriGrade
+  score: number
+  negative_points: number
+  positive_points: number
+  breakdown: {
+    energy_points: number
+    sugars_points: number
+    saturated_fat_points: number
+    sodium_points: number
+    fiber_points: number
+    protein_points: number
+    fruits_veg_points: number
+  }
+  is_beverage: boolean
+  data_completeness: 'full' | 'partial' | 'minimal'
+  insufficient_data?: boolean
+}
+
 export interface AnalysisResult {
   rating: Rating
   confidence: number
@@ -41,6 +62,7 @@ export interface AnalysisResult {
   product: Product
   user_name: string
   ml_used: boolean
+  nutri_score?: NutriScore
 }
 
 export interface ChatMessage {

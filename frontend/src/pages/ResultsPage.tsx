@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScanLine, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, Package, AlertTriangle } from 'lucide-react'
 import Navbar from '../components/Navbar'
+import NutriScore from '../components/NutriScore'
 import { analyzeApi, productApi } from '../services/api'
 import { useTheme } from '../context/ThemeContext'
 import type { AnalysisResult, Product, Rating } from '../types'
@@ -388,6 +389,10 @@ export default function ResultsPage() {
               {speaking ? '⏹ Stop' : '🔊 Hear Reason'}
             </motion.button>
           </div>
+
+          {/* Nutri-Score (universal nutritional quality — separate from the
+              personalized Safe/Caution/Avoid analysis above) */}
+          {result.nutri_score && <NutriScore data={result.nutri_score} />}
 
           {/* Ingredients accordion */}
           {product.ingredients && (
