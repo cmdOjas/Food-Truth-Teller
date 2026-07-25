@@ -272,10 +272,6 @@ export default function ScanPage() {
               <div style={{ borderRadius: 12, overflow: 'hidden' }}>
                 <div id="qr-reader" />
               </div>
-
-              <p style={{ textAlign: 'center', color: theme.textSubtle, fontSize: 13, marginTop: 12 }}>
-                Hold barcode steady in the viewfinder · EAN-13, UPC-A, CODE-128 supported
-              </p>
             </div>
 
             <motion.button

@@ -70,7 +70,7 @@ export default function ProfileSetupPage() {
   const [error, setError] = useState('')
   const [form, setForm] = useState<FormData>({
     name: '', age: '', gender: '', weight: '',
-    diseases: [], allergies: [], diet_type: 'non-vegetarian',
+    diseases: [], allergies: [], diet_type: '',
     sensitivity: 'medium',
   })
   const [noneDisease, setNoneDisease] = useState(false)
