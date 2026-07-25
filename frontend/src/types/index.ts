@@ -50,6 +50,18 @@ export interface NutriScore {
   insufficient_data?: boolean
 }
 
+export interface AlternativeProduct {
+  product_id: number | null
+  barcode: string
+  name: string
+  brand?: string
+  image_url?: string | null
+  calories: number
+  sodium_mg: number
+  sugar_g: number
+  why_better: string
+}
+
 export interface AnalysisResult {
   rating: Rating
   confidence: number
@@ -63,6 +75,7 @@ export interface AnalysisResult {
   user_name: string
   ml_used: boolean
   nutri_score?: NutriScore
+  alternatives?: AlternativeProduct[]
 }
 
 export interface ChatMessage {

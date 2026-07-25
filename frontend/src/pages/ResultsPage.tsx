@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ScanLine, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, Package, AlertTriangle, CheckCircle } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import NutriScore from '../components/NutriScore'
+import AlternativesRow from '../components/AlternativesRow'
 import { analyzeApi, productApi, intakeApi } from '../services/api'
 import { useTheme } from '../context/ThemeContext'
 import type { AnalysisResult, Product, Rating } from '../types'
@@ -418,6 +419,12 @@ export default function ResultsPage() {
           {/* Nutri-Score (universal nutritional quality — separate from the
               personalized Safe/Caution/Avoid analysis above) */}
           {result.nutri_score && <NutriScore data={result.nutri_score} />}
+
+          {/* Better options — only for Caution/Avoid with real alternatives;
+              silently omitted otherwise (no empty-state messaging) */}
+          {result.rating !== 'safe' && result.alternatives && result.alternatives.length > 0 && (
+            <AlternativesRow items={result.alternatives} />
+          )}
 
           {/* Going to eat this? — logs nutrients to today's running total */}
           <div style={{

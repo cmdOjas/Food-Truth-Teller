@@ -1126,6 +1126,172 @@ def fetch_from_openfoodfacts(barcode: str) -> dict | None:
 
 
 # ─────────────────────────────────────────────
+# Alternative Product Suggestions
+# Independent of the chatbot's own simple "list of safe names" helper in
+# chatbot/engine.py — this returns structured, nutrient-comparison data for
+# the result screen, only for products rated Caution or Avoid.
+# ─────────────────────────────────────────────
+_ALT_NUTRIENT_LABELS = {
+    "sugar_g": "sugar", "sodium_mg": "sodium",
+    "saturated_fat_g": "saturated fat", "calories": "calories",
+}
+
+
+def _flagged_nutrients(product_data: dict, profile: dict, daily_intake: dict | None) -> set:
+    """
+    Return the set of nutrient keys responsible for this product's
+    Caution/Avoid rating for this user — both the per-100g thresholds
+    (sugar/sodium, mirroring rate_product() sections 6-7) and the
+    cumulative daily-limit check (mirroring section 11). Read-only: it
+    doesn't mutate anything, just identifies WHICH nutrients are the
+    reason so alternatives can be ranked and explained specifically.
+    """
+    flagged: set = set()
+    sugar_g   = float(product_data.get("per_100g_sugar")  or 0)
+    sodium_mg = float(product_data.get("per_100g_sodium") or 0)
+
+    diseases = [d.lower() for d in (profile.get("diseases") or [])]
+
+    def has_d(*keys):
+        return any(k in d for k in keys for d in diseases)
+
+    sensitivity = (profile.get("sensitivity") or "medium").lower()
+    if sensitivity not in _SENSITIVITY_MULTIPLIER:
+        sensitivity = "medium"
+    mult = _SENSITIVITY_MULTIPLIER[sensitivity]
+
+    base_sugar = _SUGAR["diabetes"] if has_d("diabetes") else _SUGAR["default"]
+    if sugar_g >= base_sugar["caution"] * mult:
+        flagged.add("sugar_g")
+
+    has_kidney = has_d("kidney")
+    is_hyper   = has_d("bp", "blood pressure", "hypertension")
+    base_sodium = _SODIUM["kidney"] if has_kidney else (_SODIUM["hypertension"] if is_hyper else _SODIUM["default"])
+    if sodium_mg >= base_sodium["caution"] * mult:
+        flagged.add("sodium_mg")
+
+    if daily_intake:
+        nutrients = _extract_intake_nutrients(product_data)
+        limits = daily_intake.get("limits", {})
+        checks = [
+            ("calories",        nutrients["calories"],        daily_intake.get("total_calories", 0.0)),
+            ("sodium_mg",       nutrients["sodium_mg"],       daily_intake.get("total_sodium_mg", 0.0)),
+            ("sugar_g",         nutrients["sugar_g"],         daily_intake.get("total_sugar_g", 0.0)),
+            ("saturated_fat_g", nutrients["saturated_fat_g"], daily_intake.get("total_saturated_fat_g", 0.0)),
+        ]
+        for key, val, current in checks:
+            limit = limits.get(key, 0)
+            if limit and (current + val) > limit:
+                flagged.add(key)
+
+    return flagged
+
+
+def _why_better_text(nutrient_key: str, scanned_val: float, alt_val: float) -> str:
+    label = _ALT_NUTRIENT_LABELS.get(nutrient_key, nutrient_key)
+    if alt_val <= 0.05:
+        if nutrient_key == "sugar_g":
+            return "No added sugar"
+        return f"Virtually no {label}"
+    if scanned_val <= 0:
+        return f"Lower {label}"
+    pct = round((scanned_val - alt_val) / scanned_val * 100)
+    if pct <= 0:
+        return f"Lower {label}"
+    return f"{pct}% less {label}"
+
+
+def _find_alternatives(conn, product_data: dict, profile: dict,
+                       daily_intake: dict | None, max_items: int = 3) -> list:
+    """
+    Same-category products that would rate Safe for this user — profile,
+    sensitivity, AND current daily intake all factored in via rate_product().
+    Ranked by biggest average improvement on whichever specific nutrients
+    got the scanned product flagged. Returns [] (never raises) when the
+    category is unknown, nothing is flagged, or no safe candidate exists.
+    """
+    category = product_data.get("category")
+    if not category:
+        return []
+
+    flagged = _flagged_nutrients(product_data, profile, daily_intake)
+    if not flagged:
+        # Avoid/caution here came from something else (allergen, diet-type
+        # mismatch, presence-based ingredient) — no nutrient comparison to
+        # honestly make, so no "why_better" claim can be produced.
+        return []
+
+    rows = conn.execute(
+        "SELECT * FROM products WHERE category=? AND barcode!=?",
+        (category, product_data.get("barcode", "")),
+    ).fetchall()
+    candidates = [row_to_dict(r) for r in rows]
+    if not candidates:
+        return []
+
+    scanned_calories = _extract_intake_nutrients(product_data)["calories"]
+    scanned_vals = {
+        "sugar_g":         float(product_data.get("per_100g_sugar")  or 0),
+        "sodium_mg":       float(product_data.get("per_100g_sodium") or 0),
+        "saturated_fat_g": float(product_data.get("per_100g_sat_fat") or 0),
+        "calories":        scanned_calories,
+    }
+
+    scored = []
+    for cand in candidates:
+        try:
+            cand_rating, _, _, _ = rate_product(cand, profile, daily_intake)
+        except Exception:
+            continue
+        if cand_rating != "safe":
+            continue
+
+        cand_calories = _extract_intake_nutrients(cand)["calories"]
+        cand_vals = {
+            "sugar_g":         float(cand.get("per_100g_sugar")  or 0),
+            "sodium_mg":       float(cand.get("per_100g_sodium") or 0),
+            "saturated_fat_g": float(cand.get("per_100g_sat_fat") or 0),
+            "calories":        cand_calories,
+        }
+
+        improvements = []
+        best_key, best_pct = None, -1.0
+        for key in flagged:
+            scanned_v = scanned_vals.get(key, 0)
+            if scanned_v <= 0:
+                continue
+            pct = (scanned_v - cand_vals.get(key, 0)) / scanned_v * 100
+            improvements.append(pct)
+            if pct > best_pct:
+                best_pct, best_key = pct, key
+
+        if not improvements or best_key is None:
+            continue
+        avg_improvement = sum(improvements) / len(improvements)
+        if avg_improvement <= 0:
+            continue  # not actually better on the flagged nutrients — skip
+
+        scored.append({
+            "product_id": cand.get("id"),
+            "barcode":    cand.get("barcode"),
+            "name":       cand.get("product_name"),
+            "brand":      cand.get("brand"),
+            "image_url":  cand.get("image_url") or None,
+            "calories":   round(cand_calories, 1),
+            "sodium_mg":  round(cand_vals["sodium_mg"], 1),
+            "sugar_g":    round(cand_vals["sugar_g"], 1),
+            "why_better": _why_better_text(best_key, scanned_vals.get(best_key, 0), cand_vals.get(best_key, 0)),
+            "_score":     avg_improvement,
+        })
+
+    scored.sort(key=lambda a: a["_score"], reverse=True)
+    top = scored[:max_items]
+    for a in top:
+        del a["_score"]
+    return top
+
+
+# ─────────────────────────────────────────────
 # Routes
 # ─────────────────────────────────────────────
 @app.route("/api/user/profile", methods=["POST"])
@@ -1277,6 +1443,17 @@ def analyze():
     rating, confidence, probabilities, reasons = rate_product(product_data, profile, daily_intake_context)
     nutri_score = calculate_nutri_score(product_data)
 
+    # Alternatives only make sense for Caution/Avoid — a Safe product has
+    # nothing to be "better" than. Always returns a list (never omitted,
+    # never errors), empty when there's nothing to suggest.
+    alternatives = []
+    if rating in ("caution", "avoid"):
+        alt_conn = get_db()
+        try:
+            alternatives = _find_alternatives(alt_conn, product_data, profile, daily_intake_context)
+        finally:
+            alt_conn.close()
+
     return jsonify({
         "rating":        rating,
         "confidence":    confidence,
@@ -1285,11 +1462,12 @@ def analyze():
             "caution": round(probabilities[1], 3),
             "avoid":   round(probabilities[2], 3),
         },
-        "reasons":     reasons,
-        "product":     product_data,
-        "user_name":   profile["name"],
-        "ml_used":     False,
-        "nutri_score": nutri_score,
+        "reasons":      reasons,
+        "product":      product_data,
+        "user_name":    profile["name"],
+        "ml_used":      False,
+        "nutri_score":  nutri_score,
+        "alternatives": alternatives,
     }), 200
 
 
