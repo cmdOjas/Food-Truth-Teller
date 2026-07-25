@@ -9,6 +9,7 @@ import ScanPage from './pages/ScanPage'
 import ResultsPage from './pages/ResultsPage'
 import ProfileEditPage from './pages/ProfileEditPage'
 import ChatPage from './pages/ChatPage'
+import TodayPage from './pages/TodayPage'
 
 function RequireProfile({ children }: { children: React.ReactNode }) {
   const userId = localStorage.getItem('user_id')
@@ -39,6 +40,9 @@ export default function App() {
             } />
             <Route path="/chat" element={
               <RequireProfile><ChatPage /></RequireProfile>
+            } />
+            <Route path="/today" element={
+              <RequireProfile><TodayPage /></RequireProfile>
             } />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

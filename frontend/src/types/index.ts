@@ -72,6 +72,50 @@ export interface ChatMessage {
   timestamp: string
 }
 
+export interface DailyLimits {
+  calories: number
+  sodium_mg: number
+  sugar_g: number
+  saturated_fat_g: number
+}
+
+export interface DailyTotals {
+  calories: number
+  sodium_mg: number
+  sugar_g: number
+  saturated_fat_g: number
+}
+
+export interface DailyPercentages {
+  calories: number
+  sodium_mg: number
+  sugar_g: number
+  saturated_fat_g: number
+}
+
+export interface LoggedProduct {
+  id: number
+  user_id: number
+  date: string
+  product_id: number | null
+  barcode: string | null
+  product_name: string
+  calories: number
+  sodium_mg: number
+  sugar_g: number
+  saturated_fat_g: number
+  timestamp: string
+}
+
+export interface IntakeSummary {
+  date: string
+  totals: DailyTotals
+  limits: DailyLimits
+  percentages: DailyPercentages
+  logged_products: LoggedProduct[]
+  logged_id?: number
+}
+
 export const DISEASES_OPTIONS = [
   { value: 'diabetes', label: 'Diabetes' },
   { value: 'bp', label: 'High Blood Pressure' },

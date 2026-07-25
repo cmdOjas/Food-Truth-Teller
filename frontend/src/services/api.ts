@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { UserProfile, Product, AnalysisResult, ChatMessage } from '../types'
+import type { UserProfile, Product, AnalysisResult, ChatMessage, IntakeSummary } from '../types'
 
 const API_BASE = (import.meta as any).env?.VITE_API_URL || '/api'
 
@@ -73,6 +73,23 @@ export const chatApi = {
       user_id: userId,
       barcode: productBarcode || 'general',
     })
+  },
+}
+
+export const intakeApi = {
+  log: async (userId: number, barcode: string, product?: Product): Promise<IntakeSummary> => {
+    const res = await api.post('/intake/log', { user_id: userId, barcode, product })
+    return res.data
+  },
+
+  today: async (userId: number): Promise<IntakeSummary> => {
+    const res = await api.get('/intake/today', { params: { user_id: userId } })
+    return res.data
+  },
+
+  deleteLog: async (userId: number, logId: number): Promise<IntakeSummary> => {
+    const res = await api.delete(`/intake/log/${logId}`, { data: { user_id: userId } })
+    return res.data
   },
 }
 

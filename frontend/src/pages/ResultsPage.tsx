@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ScanLine, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, Package, AlertTriangle } from 'lucide-react'
+import { ScanLine, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, Package, AlertTriangle, CheckCircle } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import NutriScore from '../components/NutriScore'
-import { analyzeApi, productApi } from '../services/api'
+import { analyzeApi, productApi, intakeApi } from '../services/api'
 import { useTheme } from '../context/ThemeContext'
 import type { AnalysisResult, Product, Rating } from '../types'
 
@@ -98,6 +98,8 @@ export default function ResultsPage() {
   const [error, setError] = useState('')
   const [showIngredients, setShowIngredients] = useState(false)
   const [speaking, setSpeaking] = useState(false)
+  const [alreadyLogged, setAlreadyLogged] = useState(false)
+  const [logging, setLogging] = useState(false)
 
   if (barcode === 'browse') return <ProductBrowse />
 
@@ -123,7 +125,30 @@ export default function ResultsPage() {
         }
       })
       .finally(() => setLoading(false))
+
+    // Check whether this exact product was already logged today, so the
+    // "Going to eat this?" prompt can show the "✓ Logged" state immediately.
+    intakeApi.today(parseInt(userId))
+      .then(summary => {
+        setAlreadyLogged(summary.logged_products.some(p => p.barcode === barcode))
+      })
+      .catch(() => { /* non-critical — leave the prompt in its default state */ })
   }, [barcode])
+
+  const handleLogIntake = async () => {
+    if (!barcode || !result) return
+    const userId = localStorage.getItem('user_id')
+    if (!userId) return
+    setLogging(true)
+    try {
+      await intakeApi.log(parseInt(userId), barcode, result.product)
+      setAlreadyLogged(true)
+    } catch {
+      setError('Could not log this product. Please try again.')
+    } finally {
+      setLogging(false)
+    }
+  }
 
   useEffect(() => {
     return () => { window.speechSynthesis?.cancel() }
@@ -393,6 +418,60 @@ export default function ResultsPage() {
           {/* Nutri-Score (universal nutritional quality — separate from the
               personalized Safe/Caution/Avoid analysis above) */}
           {result.nutri_score && <NutriScore data={result.nutri_score} />}
+
+          {/* Going to eat this? — logs nutrients to today's running total */}
+          <div style={{
+            background: theme.cardBg, borderRadius: 20, padding: '1.5rem',
+            boxShadow: theme.isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.07)',
+            border: `1px solid ${theme.cardBorder}`,
+            marginBottom: 16, textAlign: 'center',
+          }}>
+            {alreadyLogged ? (
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                color: theme.green, fontWeight: 700, fontSize: 15,
+              }}>
+                <CheckCircle size={20} /> Logged
+              </div>
+            ) : (
+              <>
+                <p style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 14 }}>
+                  Going to eat this?
+                </p>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleLogIntake}
+                    disabled={logging}
+                    style={{
+                      padding: '12px 24px', borderRadius: 12, border: 'none',
+                      background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                      color: 'white', fontWeight: 700, fontSize: 15,
+                      cursor: logging ? 'default' : 'pointer',
+                      opacity: logging ? 0.7 : 1,
+                      boxShadow: '0 4px 15px rgba(34,197,94,0.3)',
+                    }}
+                  >
+                    {logging ? 'Logging...' : 'Yes, log it'}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    disabled={logging}
+                    style={{
+                      padding: '12px 24px', borderRadius: 12,
+                      border: `2px solid ${theme.cardBorder}`,
+                      background: 'transparent', color: theme.textMuted,
+                      fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                    }}
+                  >
+                    Not now
+                  </motion.button>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Ingredients accordion */}
           {product.ingredients && (

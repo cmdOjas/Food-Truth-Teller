@@ -332,6 +332,40 @@ def init_db():
 
         CREATE INDEX IF NOT EXISTS idx_chat_user_barcode
             ON chat_messages (user_id, barcode, id);
+
+        -- One row per user per day; the (user_id, date) primary key is what
+        -- makes it "reset" each new day without any cron job — a new date
+        -- string simply starts a fresh row via the log endpoint's upsert.
+        CREATE TABLE IF NOT EXISTS daily_intake (
+            user_id               INTEGER NOT NULL,
+            date                  TEXT NOT NULL,
+            total_calories        REAL DEFAULT 0,
+            total_sodium_mg       REAL DEFAULT 0,
+            total_sugar_g         REAL DEFAULT 0,
+            total_saturated_fat_g REAL DEFAULT 0,
+            PRIMARY KEY (user_id, date)
+        );
+
+        -- Today's individual log line items. `barcode` is stored in addition
+        -- to the columns the feature spec asked for, so the frontend can
+        -- reliably show "already logged today" for the currently viewed
+        -- product without a fragile name match.
+        CREATE TABLE IF NOT EXISTS logged_products (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id         INTEGER NOT NULL,
+            date            TEXT NOT NULL,
+            product_id      INTEGER,
+            barcode         TEXT,
+            product_name    TEXT NOT NULL,
+            calories        REAL DEFAULT 0,
+            sodium_mg       REAL DEFAULT 0,
+            sugar_g         REAL DEFAULT 0,
+            saturated_fat_g REAL DEFAULT 0,
+            timestamp       TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_logged_products_user_date
+            ON logged_products (user_id, date, id);
     """)
     conn.commit()
 
@@ -464,9 +498,105 @@ _SENSITIVITY_LABEL      = {"low": "Low", "medium": "Medium", "high": "High"}
 
 
 # ─────────────────────────────────────────────
+# Daily nutrient limits (for cumulative intake tracking)
+# Derived from the same WHO/AHA/ADA reference values documented above,
+# expressed as full-day totals instead of per-100g concentrations.
+#   Sodium default 2000 mg/day (WHO); 1500 mg/day hypertension/kidney (AHA ideal)
+#   Sugar default 50 g/day (WHO <10% of energy on a 2000 kcal diet); 25 g/day diabetes
+#   Saturated fat default 20 g/day (general guidance); 13 g/day heart disease (AHA)
+# ─────────────────────────────────────────────
+_DAILY_SODIUM_MG = {"default": 2000.0, "hypertension": 1500.0, "kidney": 1500.0}
+_DAILY_SUGAR_G   = {"default":   50.0, "diabetes":       25.0}
+_DAILY_SAT_FAT_G = {"default":   20.0, "heart":          13.0}
+
+
+def calculate_daily_limits(profile: dict) -> dict:
+    """
+    Personal daily nutrient limits for intake tracking.
+
+    Calories use a 2000 kcal adult baseline, nudged by gender/age when
+    available, and are NEVER scaled by sensitivity — it's an energy
+    budget, not a warning threshold.
+
+    Sodium / sugar / saturated fat reuse the disease-specific daily
+    reference values above and ARE scaled by the same sensitivity
+    multiplier used in rate_product(): low relaxes the limit, high
+    tightens it, medium leaves the official value unchanged.
+    """
+    diseases = [d.lower() for d in (profile.get("diseases") or [])]
+
+    def has_d(*keys):
+        return any(k in d for k in keys for d in diseases)
+
+    sensitivity = (profile.get("sensitivity") or "medium").lower()
+    if sensitivity not in _SENSITIVITY_MULTIPLIER:
+        sensitivity = "medium"
+    mult = _SENSITIVITY_MULTIPLIER[sensitivity]
+
+    # Calories — 2000 kcal baseline; nudge by gender/age if known
+    gender = (profile.get("gender") or "").lower()
+    if gender == "male":
+        calories = 2200.0
+    elif gender == "female":
+        calories = 1800.0
+    else:
+        calories = 2000.0
+    try:
+        age = int(profile.get("age") or 0)
+        if age >= 60:
+            calories -= 200.0
+    except (TypeError, ValueError):
+        pass
+
+    if has_d("kidney"):
+        sodium = _DAILY_SODIUM_MG["kidney"]
+    elif has_d("bp", "blood pressure", "hypertension"):
+        sodium = _DAILY_SODIUM_MG["hypertension"]
+    else:
+        sodium = _DAILY_SODIUM_MG["default"]
+
+    sugar   = _DAILY_SUGAR_G["diabetes"] if has_d("diabetes") else _DAILY_SUGAR_G["default"]
+    sat_fat = _DAILY_SAT_FAT_G["heart"] if has_d("heart") else _DAILY_SAT_FAT_G["default"]
+
+    return {
+        "calories":        round(calories, 0),
+        "sodium_mg":       round(sodium * mult, 0),
+        "sugar_g":         round(sugar * mult, 1),
+        "saturated_fat_g": round(sat_fat * mult, 1),
+    }
+
+
+def _extract_intake_nutrients(product_data: dict) -> dict:
+    """
+    Coerce a product's per-100g nutrients into the four values tracked by
+    daily intake logging. Missing/None/blank values default to 0 and this
+    never raises. Calories are derived from energy in kJ (kJ / 4.184) since
+    products don't store kcal directly. Values represent a single 100g
+    serving — the only serving unit this app's product data provides.
+    """
+    product_data = product_data or {}
+
+    def _num(v):
+        if v is None or v == "":
+            return 0.0
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return 0.0
+
+    energy_kj = _num(product_data.get("per_100g_energy_kj"))
+    return {
+        "calories":        round(energy_kj / 4.184, 1) if energy_kj else 0.0,
+        "sodium_mg":       _num(product_data.get("per_100g_sodium")),
+        "sugar_g":         _num(product_data.get("per_100g_sugar")),
+        "saturated_fat_g": _num(product_data.get("per_100g_sat_fat")),
+    }
+
+
+# ─────────────────────────────────────────────
 # Unified threshold-based rating engine
 # ─────────────────────────────────────────────
-def rate_product(product_data: dict, profile: dict) -> tuple:
+def rate_product(product_data: dict, profile: dict, daily_intake: dict | None = None) -> tuple:
     """
     Returns (rating, confidence, probabilities, reasons).
 
@@ -475,7 +605,15 @@ def rate_product(product_data: dict, profile: dict) -> tuple:
       caution — a nutrient exceeds caution but not avoid threshold, or
                 lactose intolerance + dairy present
       avoid   — a nutrient exceeds avoid threshold, OR zero-tolerance ingredient
-                present (gluten for celiac, allergen for allergy profile)
+                present (gluten for celiac, allergen for allergy profile), OR
+                adding this product would push today's cumulative intake over
+                a daily limit (only when `daily_intake` is supplied)
+
+    daily_intake (optional): today's running totals + sensitivity-scaled
+    daily limits, e.g. {"total_sodium_mg": 1800, ..., "limits": {...}}.
+    When omitted (the default), behaviour is identical to before this
+    parameter existed — every existing caller that doesn't pass it is
+    unaffected.
     """
     text = (product_data.get("ingredients") or "").lower()
     sugar_g  = float(product_data.get("per_100g_sugar")  or 0)
@@ -663,6 +801,34 @@ def rate_product(product_data: dict, profile: dict) -> tuple:
             reasons.append(
                 f"⚠️ This product contains {found_str} (dairy) — not suitable for your vegan diet preference"
             )
+
+    # ── 11. Cumulative daily intake check ───────────────────────────────────
+    # Escalates to Avoid if adding this product would push today's running
+    # total over the user's daily limit for calories, sodium, sugar, or
+    # saturated fat — even if the product alone would otherwise be Safe.
+    # Only runs when the caller supplies `daily_intake`; existing callers
+    # that don't pass it are completely unaffected.
+    if daily_intake:
+        product_nutrients = _extract_intake_nutrients(product_data)
+        limits = daily_intake.get("limits", {})
+        cumulative_checks = [
+            ("calories", "kcal", product_nutrients["calories"],
+             daily_intake.get("total_calories", 0.0), limits.get("calories", 0)),
+            ("sodium", "mg", product_nutrients["sodium_mg"],
+             daily_intake.get("total_sodium_mg", 0.0), limits.get("sodium_mg", 0)),
+            ("sugar", "g", product_nutrients["sugar_g"],
+             daily_intake.get("total_sugar_g", 0.0), limits.get("sugar_g", 0)),
+            ("saturated fat", "g", product_nutrients["saturated_fat_g"],
+             daily_intake.get("total_saturated_fat_g", 0.0), limits.get("saturated_fat_g", 0)),
+        ]
+        for label, unit, product_val, current_total, limit in cumulative_checks:
+            if limit and (current_total + product_val) > limit:
+                projected = current_total + product_val
+                levels.append(2)
+                reasons.append(
+                    f"🚫 This would push today's {label} to {projected:.0f}{unit} — "
+                    f"over your {limit:.0f}{unit} daily limit"
+                )
 
     # ── Aggregate ────────────────────────────────────────────────────────────
     worst = max(levels) if levels else 0
@@ -1093,7 +1259,22 @@ def analyze():
     profile["diseases"]  = json.loads(profile["diseases"] or "[]")
     profile["allergies"] = json.loads(profile["allergies"] or "[]")
 
-    rating, confidence, probabilities, reasons = rate_product(product_data, profile)
+    # Cumulative daily-intake context — lets rate_product() escalate to
+    # Avoid if this product would push today's running total over the
+    # user's daily limit. Read-only: viewing a result never creates or
+    # modifies a daily_intake row, only /api/intake/log does that.
+    intake_conn = get_db()
+    today_totals = _get_today_totals(intake_conn, user_id, _today_str())
+    intake_conn.close()
+    daily_intake_context = {
+        "total_calories":        today_totals["total_calories"],
+        "total_sodium_mg":       today_totals["total_sodium_mg"],
+        "total_sugar_g":         today_totals["total_sugar_g"],
+        "total_saturated_fat_g": today_totals["total_saturated_fat_g"],
+        "limits": calculate_daily_limits(profile),
+    }
+
+    rating, confidence, probabilities, reasons = rate_product(product_data, profile, daily_intake_context)
     nutri_score = calculate_nutri_score(product_data)
 
     return jsonify({
@@ -1110,6 +1291,202 @@ def analyze():
         "ml_used":     False,
         "nutri_score": nutri_score,
     }), 200
+
+
+# ─────────────────────────────────────────────
+# Daily Intake Tracking
+# ─────────────────────────────────────────────
+def _today_str() -> str:
+    return datetime.utcnow().date().isoformat()
+
+
+def _get_today_totals(conn, user_id: int, date_str: str) -> dict:
+    """Read-only: today's running totals, or zeros if nothing logged yet."""
+    row = conn.execute(
+        "SELECT * FROM daily_intake WHERE user_id=? AND date=?", (user_id, date_str)
+    ).fetchone()
+    if row:
+        return row_to_dict(row)
+    return {
+        "user_id": user_id, "date": date_str,
+        "total_calories": 0.0, "total_sodium_mg": 0.0,
+        "total_sugar_g": 0.0, "total_saturated_fat_g": 0.0,
+    }
+
+
+def _add_to_daily_intake(conn, user_id: int, date_str: str, nutrients: dict) -> None:
+    """Atomically create-or-add-to today's daily_intake row."""
+    conn.execute(
+        """INSERT INTO daily_intake
+               (user_id, date, total_calories, total_sodium_mg, total_sugar_g, total_saturated_fat_g)
+           VALUES (?,?,?,?,?,?)
+           ON CONFLICT(user_id, date) DO UPDATE SET
+               total_calories = total_calories + excluded.total_calories,
+               total_sodium_mg = total_sodium_mg + excluded.total_sodium_mg,
+               total_sugar_g = total_sugar_g + excluded.total_sugar_g,
+               total_saturated_fat_g = total_saturated_fat_g + excluded.total_saturated_fat_g""",
+        (user_id, date_str, nutrients["calories"], nutrients["sodium_mg"],
+         nutrients["sugar_g"], nutrients["saturated_fat_g"]),
+    )
+    conn.commit()
+
+
+def _subtract_from_daily_intake(conn, user_id: int, date_str: str, nutrients: dict) -> None:
+    """Subtract a deleted log entry's nutrients from that day's totals (floored at 0)."""
+    conn.execute(
+        """UPDATE daily_intake
+           SET total_calories = MAX(0, total_calories - ?),
+               total_sodium_mg = MAX(0, total_sodium_mg - ?),
+               total_sugar_g = MAX(0, total_sugar_g - ?),
+               total_saturated_fat_g = MAX(0, total_saturated_fat_g - ?)
+           WHERE user_id=? AND date=?""",
+        (nutrients["calories"], nutrients["sodium_mg"], nutrients["sugar_g"],
+         nutrients["saturated_fat_g"], user_id, date_str),
+    )
+    conn.commit()
+
+
+def _intake_summary(conn, user_id: int, profile: dict) -> dict:
+    """Build {date, totals, limits, percentages, logged_products} for today."""
+    date_str = _today_str()
+    totals = _get_today_totals(conn, user_id, date_str)
+    limits = calculate_daily_limits(profile)
+
+    def pct(total, limit):
+        return round((total / limit) * 100, 1) if limit else 0.0
+
+    percentages = {
+        "calories":        pct(totals["total_calories"],       limits["calories"]),
+        "sodium_mg":       pct(totals["total_sodium_mg"],       limits["sodium_mg"]),
+        "sugar_g":         pct(totals["total_sugar_g"],         limits["sugar_g"]),
+        "saturated_fat_g": pct(totals["total_saturated_fat_g"], limits["saturated_fat_g"]),
+    }
+
+    logged_rows = conn.execute(
+        "SELECT * FROM logged_products WHERE user_id=? AND date=? ORDER BY id DESC",
+        (user_id, date_str),
+    ).fetchall()
+
+    return {
+        "date": date_str,
+        "totals": {
+            "calories":        round(totals["total_calories"], 1),
+            "sodium_mg":       round(totals["total_sodium_mg"], 1),
+            "sugar_g":         round(totals["total_sugar_g"], 1),
+            "saturated_fat_g": round(totals["total_saturated_fat_g"], 1),
+        },
+        "limits": limits,
+        "percentages": percentages,
+        "logged_products": [row_to_dict(r) for r in logged_rows],
+    }
+
+
+@app.route("/api/intake/log", methods=["POST"])
+def log_intake():
+    """Log a product's nutrients to today's running total."""
+    data    = request.get_json(force=True) or {}
+    user_id = data.get("user_id")
+    barcode = data.get("barcode")
+    inline_product = data.get("product")
+
+    if not user_id or (not barcode and not inline_product):
+        return jsonify({"error": "user_id and barcode (or product) are required"}), 400
+
+    conn = get_db()
+    try:
+        profile = _load_profile(conn, user_id)
+        if not profile:
+            return jsonify({"error": "Profile not found. Please create your profile first."}), 404
+
+        product_data = inline_product if inline_product else _resolve_product(conn, barcode)
+        if not product_data:
+            return jsonify({"error": f"Product not found for barcode {barcode}"}), 404
+
+        nutrients = _extract_intake_nutrients(product_data)
+        date_str  = _today_str()
+
+        _add_to_daily_intake(conn, user_id, date_str, nutrients)
+
+        # Resolve the local products.id if this barcode is cached locally
+        resolved_barcode = product_data.get("barcode", barcode)
+        product_row = conn.execute(
+            "SELECT id FROM products WHERE barcode=?", (resolved_barcode,)
+        ).fetchone()
+        product_id = product_row["id"] if product_row else None
+
+        cur = conn.execute(
+            """INSERT INTO logged_products
+                   (user_id, date, product_id, barcode, product_name,
+                    calories, sodium_mg, sugar_g, saturated_fat_g, timestamp)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (user_id, date_str, product_id, resolved_barcode,
+             product_data.get("product_name", "Unknown Product"),
+             nutrients["calories"], nutrients["sodium_mg"], nutrients["sugar_g"],
+             nutrients["saturated_fat_g"], datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        log_id = cur.lastrowid
+
+        summary = _intake_summary(conn, user_id, profile)
+    finally:
+        conn.close()
+
+    summary["logged_id"] = log_id
+    return jsonify(summary), 200
+
+
+@app.route("/api/intake/today", methods=["GET"])
+def get_today_intake():
+    """Today's totals + personal daily limits + percentage consumed."""
+    user_id = request.args.get("user_id", type=int)
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    conn = get_db()
+    try:
+        profile = _load_profile(conn, user_id)
+        if not profile:
+            return jsonify({"error": "Profile not found. Please create your profile first."}), 404
+        summary = _intake_summary(conn, user_id, profile)
+    finally:
+        conn.close()
+
+    return jsonify(summary), 200
+
+
+@app.route("/api/intake/log/<int:log_id>", methods=["DELETE"])
+def delete_intake_log(log_id):
+    """Remove a logged entry and subtract its nutrients from today's total."""
+    data    = request.get_json(silent=True) or {}
+    user_id = data.get("user_id") or request.args.get("user_id", type=int)
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    conn = get_db()
+    try:
+        profile = _load_profile(conn, user_id)
+        if not profile:
+            return jsonify({"error": "Profile not found. Please create your profile first."}), 404
+
+        log_row = conn.execute(
+            "SELECT * FROM logged_products WHERE id=? AND user_id=?", (log_id, user_id)
+        ).fetchone()
+        if not log_row:
+            return jsonify({"error": "Logged entry not found"}), 404
+        log = row_to_dict(log_row)
+
+        _subtract_from_daily_intake(conn, user_id, log["date"], {
+            "calories": log["calories"], "sodium_mg": log["sodium_mg"],
+            "sugar_g": log["sugar_g"], "saturated_fat_g": log["saturated_fat_g"],
+        })
+        conn.execute("DELETE FROM logged_products WHERE id=?", (log_id,))
+        conn.commit()
+
+        summary = _intake_summary(conn, user_id, profile)
+    finally:
+        conn.close()
+
+    return jsonify(summary), 200
 
 
 # ─────────────────────────────────────────────

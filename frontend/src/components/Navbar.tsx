@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Leaf, ScanLine, User, MessageSquare, Menu, X, Moon, Sun } from 'lucide-react'
+import { Leaf, ScanLine, User, MessageSquare, Menu, X, Moon, Sun, PieChart } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
 const navLinks = [
   { href: '/scan', label: 'Scan', icon: ScanLine },
+  { href: '/today', label: 'Today', icon: PieChart },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
 ]
