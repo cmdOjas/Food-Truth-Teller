@@ -171,7 +171,7 @@ export default function ProfileSetupPage() {
 
         {/* Step indicator */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 32, justifyContent: 'center' }}>
-          {STEPS.map((s, i) => (
+          {STEPS.map((_, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <motion.div
                 animate={{
@@ -201,7 +201,7 @@ export default function ProfileSetupPage() {
         {/* Card */}
         <motion.div
           style={{
-            background: theme.cardBg, borderRadius: 24, padding: '2rem',
+            background: theme.cardBg, borderRadius: 20, padding: '2rem',
             boxShadow: theme.isDark ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.08)',
             border: `1px solid ${theme.cardBorder}`,
           }}

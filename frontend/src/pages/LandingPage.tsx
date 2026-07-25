@@ -219,7 +219,7 @@ export default function LandingPage() {
                 background: 'linear-gradient(135deg, #22c55e, #16a34a)',
                 color: 'white', border: 'none',
                 padding: '16px 32px', borderRadius: 12,
-                fontSize: 17, fontWeight: 700, cursor: 'pointer',
+                fontSize: 16, fontWeight: 700, cursor: 'pointer',
                 boxShadow: '0 8px 25px rgba(34,197,94,0.25)',
               }}
             >
@@ -241,7 +241,7 @@ export default function LandingPage() {
                 background: theme.btnSecBg, color: theme.btnSecText,
                 border: `2px solid ${theme.btnSecBorder}`,
                 padding: '16px 28px', borderRadius: 12,
-                fontSize: 17, fontWeight: 600, cursor: 'pointer',
+                fontSize: 16, fontWeight: 600, cursor: 'pointer',
               }}
             >
               See How It Works
@@ -257,7 +257,7 @@ export default function LandingPage() {
           >
             <div style={{
               display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
-              background: theme.cardBg, borderRadius: 24,
+              background: theme.cardBg, borderRadius: 20,
               padding: '24px', boxShadow: theme.isDark ? '0 25px 60px rgba(0,0,0,0.5)' : '0 25px 60px rgba(0,0,0,0.12)',
               border: `1px solid ${theme.cardBorder}`, position: 'relative',
             }}>
@@ -339,7 +339,7 @@ export default function LandingPage() {
             }}>
               How It Works
             </h2>
-            <p style={{ color: theme.textMuted, fontSize: 17, marginTop: 12, maxWidth: 480, margin: '12px auto 0' }}>
+            <p style={{ color: theme.textMuted, fontSize: 15, marginTop: 12, maxWidth: 480, margin: '12px auto 0' }}>
               Three simple steps to understand exactly what you're eating.
             </p>
           </motion.div>
@@ -418,7 +418,7 @@ export default function LandingPage() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 style={{
                   display: 'flex', alignItems: 'flex-start', gap: 16,
-                  background: theme.cardBg, padding: '1.5rem', borderRadius: 16,
+                  background: theme.cardBg, padding: '1.5rem', borderRadius: 20,
                   boxShadow: theme.isDark ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)',
                   border: `1px solid ${theme.cardBorder}`,
                 }}
@@ -458,13 +458,13 @@ export default function LandingPage() {
             maxWidth: 640, margin: '0 auto',
             background: 'linear-gradient(135deg, #166534, #16a34a)',
             padding: 'clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem)',
-            borderRadius: 28, color: 'white',
+            borderRadius: 20, color: 'white',
           }}
         >
           <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, marginBottom: 16, lineHeight: 1.2 }}>
             Ready to eat smarter?
           </h2>
-          <p style={{ fontSize: 17, opacity: 0.9, marginBottom: 32, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 15, opacity: 0.9, marginBottom: 32, lineHeight: 1.7 }}>
             Set up your health profile in under a minute and start scanning.
           </p>
           <motion.button
@@ -475,7 +475,7 @@ export default function LandingPage() {
               display: 'inline-flex', alignItems: 'center', gap: 8,
               background: 'white', color: '#16a34a',
               border: 'none', padding: '16px 36px', borderRadius: 12,
-              fontSize: 17, fontWeight: 700, cursor: 'pointer',
+              fontSize: 16, fontWeight: 700, cursor: 'pointer',
             }}
           >
             {hasProfile ? 'Start Scanning' : 'Create My Profile'}

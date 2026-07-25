@@ -141,7 +141,7 @@ export default function ScanPage() {
                 animate={{ scale: [1, 1.15, 1] }}
                 transition={{ duration: 0.5, times: [0, 0.5, 1] }}
                 style={{
-                  background: theme.cardBg, borderRadius: 24, padding: '2.5rem 3rem',
+                  background: theme.cardBg, borderRadius: 20, padding: '2.5rem 3rem',
                   textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
                   border: `1px solid ${theme.cardBorder}`,
                 }}

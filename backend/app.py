@@ -11,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 
 import joblib
-import numpy as np
 import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS

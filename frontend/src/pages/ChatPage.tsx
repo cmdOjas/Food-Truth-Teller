@@ -83,7 +83,7 @@ function MessageBubble({ msg, theme }: { msg: ChatMessage; theme: ReturnType<typ
           )}
         </div>
         {time && (
-          <span style={{ fontSize: 11, color: theme.textSubtle, margin: '4px 6px 0' }}>
+          <span style={{ fontSize: 12, color: theme.textSubtle, margin: '4px 6px 0' }}>
             {time}
           </span>
         )}

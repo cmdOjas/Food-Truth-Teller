@@ -53,7 +53,7 @@ export default function IntakeRing({
           <span style={{ fontSize: 16, fontWeight: 800, color: theme.text, lineHeight: 1.1 }}>
             {displayCurrent}
           </span>
-          <span style={{ fontSize: 11, color: theme.textSubtle, lineHeight: 1.1 }}>
+          <span style={{ fontSize: 12, color: theme.textSubtle, lineHeight: 1.1 }}>
             / {displayLimit}{unit}
           </span>
         </div>

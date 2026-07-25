@@ -205,7 +205,7 @@ export default function ResultsPage() {
         <div style={{ paddingTop: 80, maxWidth: 500, margin: '0 auto', padding: '80px 1rem 2rem', textAlign: 'center' }}>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
             <AlertTriangle size={56} color={isServerDown ? '#dc2626' : '#f59e0b'} style={{ marginBottom: 16 }} />
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: theme.text, marginBottom: 8 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.text, marginBottom: 8 }}>
               {isServerDown ? 'Connection Error' : 'Product Not Found'}
             </h2>
             <p style={{ color: theme.textMuted, marginBottom: 24, lineHeight: 1.6 }}>{error}</p>
@@ -279,7 +279,7 @@ export default function ResultsPage() {
               </div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <h1 style={{ fontSize: 19, fontWeight: 800, color: theme.text, lineHeight: 1.3, marginBottom: 4 }}>
+              <h1 style={{ fontSize: 20, fontWeight: 800, color: theme.text, lineHeight: 1.3, marginBottom: 4 }}>
                 {product.product_name}
               </h1>
               <p style={{ color: theme.textMuted, fontSize: 14, marginBottom: 6 }}>
@@ -344,7 +344,7 @@ export default function ResultsPage() {
             >
               {(['safe', 'caution', 'avoid'] as Rating[]).map((r) => (
                 <div key={r} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
                     {r}
                   </div>
                   <div style={{ width: 60, height: 4, background: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' }}>
@@ -355,7 +355,7 @@ export default function ResultsPage() {
                       style={{ height: '100%', background: 'white', borderRadius: 2 }}
                     />
                   </div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', marginTop: 3, fontWeight: 700 }}>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.9)', marginTop: 3, fontWeight: 700 }}>
                     {Math.round(probabilities[r] * 100)}%
                   </div>
                 </div>
@@ -373,7 +373,7 @@ export default function ResultsPage() {
             <p style={{ fontSize: 13, color: theme.textSubtle, marginBottom: 10, fontStyle: 'italic' }}>
               According to your health profile, this is your result
             </p>
-            <h3 style={{ fontWeight: 700, fontSize: 17, color: theme.text, marginBottom: 14 }}>
+            <h3 style={{ fontWeight: 700, fontSize: 16, color: theme.text, marginBottom: 14 }}>
               Why this rating?
             </h3>
             <div>

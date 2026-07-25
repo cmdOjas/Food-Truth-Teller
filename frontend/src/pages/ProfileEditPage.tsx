@@ -174,7 +174,7 @@ export default function ProfileEditPage() {
               <User size={22} color="white" />
             </div>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: theme.text }}>Your Profile</h1>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: theme.text }}>Your Profile</h1>
               <p style={{ color: theme.textMuted, fontSize: 14 }}>Update your health information</p>
             </div>
           </div>

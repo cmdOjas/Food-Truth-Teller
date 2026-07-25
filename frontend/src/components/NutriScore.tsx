@@ -68,7 +68,7 @@ export default function NutriScore({ data }: { data: NutriScoreData }) {
       transition={{ duration: 0.4, ease: 'easeOut' }}
       style={{
         background: theme.cardBg,
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 20,
         marginBottom: 16,
         border: `1px solid ${theme.cardBorder}`,

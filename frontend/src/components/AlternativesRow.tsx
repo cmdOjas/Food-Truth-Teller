@@ -61,7 +61,7 @@ export default function AlternativesRow({ items }: { items: AlternativeProduct[]
             </div>
 
             {item.brand && (
-              <div style={{ fontSize: 11, color: theme.textSubtle }}>
+              <div style={{ fontSize: 12, color: theme.textSubtle }}>
                 {item.brand}
               </div>
             )}
@@ -75,7 +75,7 @@ export default function AlternativesRow({ items }: { items: AlternativeProduct[]
 
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-              fontSize: 11, fontWeight: 600, color: theme.greenDark,
+              fontSize: 12, fontWeight: 600, color: theme.greenDark,
               background: theme.greenBg, borderRadius: 999, padding: '4px 8px',
             }}>
               View <ChevronRight size={12} />
